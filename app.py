@@ -21,8 +21,8 @@ if APP_ENV == "production":
         raise RuntimeError("Production requires a random SECRET_KEY of at least 32 characters.")
     if not re.fullmatch(r"[a-z0-9._-]{3,20}", INITIAL_ADMIN_USERNAME):
         raise RuntimeError("Production ASM_USERNAME must be 3-20 letters, numbers, dots, underscores, or hyphens.")
-    if len(PASSWORD) < 12 or PASSWORD == "asm12345":
-        raise RuntimeError("Production requires an ASM_PASSWORD of at least 12 characters.")
+    if len(PASSWORD) < 8 or PASSWORD == "asm12345":
+        raise RuntimeError("Production requires a non-default ASM_PASSWORD of at least 8 characters.")
 app.secret_key = SECRET_KEY
 app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
