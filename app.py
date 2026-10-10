@@ -14,6 +14,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret")
 app.config.update(SESSION_COOKIE_SAMESITE="Lax", MAX_CONTENT_LENGTH=40 * 1024 * 1024)
 PASSWORD = os.environ.get("ASM_PASSWORD", "asm12345")
+INITIAL_ADMIN_USERNAME = os.environ.get("ASM_USERNAME", "admin").strip().lower()
 AGENCY_PHONE = os.environ.get("AGENCY_PHONE", "")
 MEDICAL_MONTHS = int(os.environ.get("MEDICAL_MONTHS", "2"))   # how long a medical stays valid
 BK = os.path.join(DATA, "backups")
@@ -123,6 +124,7 @@ def db():
     c.execute("create table if not exists log(id integer primary key, ts text, action text, aid integer, detail text)")
     c.execute("create table if not exists user(id integer primary key, username text unique, pw text, role text, active integer default 1, created text)")
     c.execute("create table if not exists invite(id integer primary key, token_hash text unique, created text not null, expires text not null, used_at text, used_by integer)")
+    c.execute("create table if not exists app_config(key text primary key, value text not null)")
     try:
         c.execute("alter table log add column who text")
     except sqlite3.OperationalError:
@@ -412,6 +414,28 @@ def load(aid):
 FAILS = {}   # ip -> [count, first_time]  (simple brute-force guard)
 
 
+def sync_initial_admin(c):
+    saved_username = c.execute("select value from app_config where key='initial_admin_username'").fetchone()
+    saved_password = c.execute("select value from app_config where key='initial_admin_password_hash'").fetchone()
+    if (saved_username and saved_username["value"] == INITIAL_ADMIN_USERNAME
+            and saved_password and check_password_hash(saved_password["value"], PASSWORD)):
+        return
+
+    c.execute("begin immediate")
+    user = c.execute("select id from user where username=?", (INITIAL_ADMIN_USERNAME,)).fetchone()
+    password_hash = generate_password_hash(PASSWORD)
+    if user:
+        c.execute("update user set pw=?, role='admin', active=1 where id=?", (password_hash, user["id"]))
+    else:
+        c.execute("insert into user(username,pw,role,active,created) values(?,?,?,1,?)",
+                  (INITIAL_ADMIN_USERNAME, password_hash, "admin", datetime.datetime.now().isoformat()))
+    c.execute("insert or replace into app_config(key,value) values('initial_admin_username',?)",
+              (INITIAL_ADMIN_USERNAME,))
+    c.execute("insert or replace into app_config(key,value) values('initial_admin_password_hash',?)",
+              (generate_password_hash(PASSWORD),))
+    c.commit()
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST" and not csrf_valid():
@@ -419,10 +443,7 @@ def login():
                                username=request.form.get("username", ""))
     err, username = "", ""
     c = db()
-    if not c.execute("select 1 from user").fetchone():     # first run: create the admin from ASM_PASSWORD
-        c.execute("insert into user(username,pw,role,active,created) values(?,?,?,1,?)",
-                  ("admin", generate_password_hash(PASSWORD), "admin", datetime.datetime.now().isoformat()))
-        c.commit()
+    sync_initial_admin(c)
     if request.method == "POST":
         ip = request.remote_addr
         n, t0 = FAILS.get(ip, [0, time.time()])

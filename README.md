@@ -12,7 +12,7 @@ into a one-page bilingual (English / Arabic) A4 CV in PDF.
   PDF title/author metadata, premium finishing details.
 
 ## Version 6: six more services
-1. Staff accounts: first start creates user "admin" with the password in ASM_PASSWORD (default asm12345, the app warns until you change it).
+1. Staff accounts: first start creates the administrator from ASM_USERNAME (default "admin") and ASM_PASSWORD (default asm12345, the app warns until you change it).
   Admin adds staff in Menu > Staff accounts or creates a one-time registration invite (expires after 24 hours). Staff cannot delete, download backups or export. Every action in the log shows who did it.
   Forgot-password help directs staff to an administrator, who can set a temporary password from Staff accounts.
    Login has a brute-force guard (5 wrong tries = 10 minute pause).
