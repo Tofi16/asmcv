@@ -67,11 +67,16 @@ h1 span{opacity:0;transform:translateY(14px);display:inline-block;animation:lett
 <main class="stage"><div class="badge"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"></div>
  <h1 id="t">ASM CV Studio</h1><p class="sub">እንኳን ደህና መጡ · Welcome back</p>
  <form class="card {{ 'shake' if err }}" method="post" id="lf">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="f"><input id="un" name="username" placeholder=" " required autofocus autocapitalize="none" autocomplete="username" value="{{ username }}"><label for="un">Username</label></div>
   <div class="f"><input id="pw" type="password" name="password" placeholder=" " required autocomplete="current-password"><label for="pw">Password</label>
    <button type="button" class="eye" id="eye" aria-label="Show password"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
   {% if err %}<p class="err">{{ err }}</p>{% endif %}
+    {% if err %}<p class="err">{{ err }}</p>{% elif notice %}<p class="notice">{{ notice }}</p>{% endif %}
   <button class="go"><span>Sign in</span><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></button></form>
+ <nav class="auth-links"><a href="{{ url_for('register') }}">Register with an invite</a><a href="{{ url_for('forgot_password') }}">Forgot password?</a></nav>
+.notice{color:#b6f3ce;font-size:13px;margin:-4px 0 10px;text-align:center}
+.auth-links{display:flex;justify-content:center;gap:18px;font-size:13px}.auth-links a{color:#a9d6ee;text-decoration:none}.auth-links a:hover{text-decoration:underline}
  <div class="steps"><i></i><u></u><i></i><u></u><i></i><u></u><i></i><u></u><i></i><u></u><i></i></div>
  <div class="names"><span>CV</span><span>Selected</span><span>Medical</span><span>Embassy</span><span>Ticket</span><span>Flown</span></div>
  <p class="foot">Private system · ASM Foreign Employment Agent</p></main>

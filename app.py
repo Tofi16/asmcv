@@ -92,12 +92,33 @@ def inject():
     return dict(L=L, SECTIONS=SECTIONS, KINDS=KINDS, DOCS=DOCS, STAGES=STAGES, MEDICAL_DAYS=MEDICAL_MONTHS * 30)
 
 
+def csrf_token():
+    token = session.get("_csrf_token")
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session["_csrf_token"] = token
+    return token
+
+
+def require_csrf():
+    expected = session.get("_csrf_token", "")
+    supplied = request.form.get("csrf_token", "")
+    if not expected or not supplied or not secrets.compare_digest(expected, supplied):
+        abort(400, description="The form expired. Reload the page and try again.")
+
+
+@app.context_processor
+def inject_csrf():
+    return dict(csrf_token=csrf_token)
+
+
 def db():
     c = sqlite3.connect(os.path.join(DATA, "asm.db"))
     c.row_factory = sqlite3.Row
     c.execute("create table if not exists app(id integer primary key, name text, ref text, data text, created text)")
     c.execute("create table if not exists log(id integer primary key, ts text, action text, aid integer, detail text)")
     c.execute("create table if not exists user(id integer primary key, username text unique, pw text, role text, active integer default 1, created text)")
+    c.execute("create table if not exists invite(id integer primary key, token_hash text unique, created text not null, expires text not null, used_at text, used_by integer)")
     try:
         c.execute("alter table log add column who text")
     except sqlite3.OperationalError:
@@ -389,6 +410,8 @@ FAILS = {}   # ip -> [count, first_time]  (simple brute-force guard)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "POST":
+        require_csrf()
     err, username = "", ""
     c = db()
     if not c.execute("select 1 from user").fetchone():     # first run: create the admin from ASM_PASSWORD
@@ -413,7 +436,65 @@ def login():
         else:
             FAILS[ip] = [n + 1, t0]
             err = "Wrong username or password"
-    return render_template("login.html", err=err, username=username)
+    return render_template("login.html", err=err, username=username,
+                           notice="Account created. Sign in." if request.args.get("registered") else "")
+
+
+def valid_invite(c, token):
+    if not token:
+        return None
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+    return c.execute("select id from invite where token_hash=? and used_at is null and expires>?",
+                     (token_hash, now)).fetchone()
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        require_csrf()
+    c = db()
+    token = request.values.get("token", "").strip()
+    err = ""
+    username = ""
+    if request.method == "POST":
+        username = request.form.get("username", "").strip().lower()
+        password = request.form.get("password", "")
+        confirmation = request.form.get("confirm", "")
+        if not re.fullmatch(r"[a-z0-9._-]{3,20}", username):
+            err = "Username must be 3-20 letters, numbers, dots, underscores, or hyphens."
+        elif len(password) < 8:
+            err = "Password must be at least 8 characters."
+        elif password != confirmation:
+            err = "Passwords do not match."
+        else:
+            c.execute("begin immediate")
+            invite = valid_invite(c, token)
+            if not invite:
+                c.rollback()
+                err = "This invite is invalid, expired, or already used. Ask an administrator for a new invite."
+            else:
+                try:
+                    cur = c.execute("insert into user(username,pw,role,active,created) values(?,?,?,1,?)",
+                                    (username, generate_password_hash(password), "staff", datetime.datetime.now().isoformat()))
+                    used_at = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+                    c.execute("update invite set used_at=?, used_by=? where id=? and used_at is null",
+                              (used_at, cur.lastrowid, invite["id"]))
+                    c.commit()
+                    c.close()
+                    log("staff registered", None, username)
+                    return redirect(url_for("login", registered=1))
+                except sqlite3.IntegrityError:
+                    c.rollback()
+                    err = "That username is already registered."
+    invite = valid_invite(c, token)
+    c.close()
+    return render_template("register.html", token=token, invite_valid=bool(invite), err=err, username=username)
+
+
+@app.route("/forgot-password")
+def forgot_password():
+    return render_template("forgot.html")
 
 
 @app.route("/logout")
@@ -977,7 +1058,25 @@ def bundle(aid):
 @admin_required
 def staff():
     users = db().execute("select id,username,role,active from user order by id").fetchall()
-    return render_template("staff.html", users=users, admin=True, m=request.args.get("m", ""))
+    return render_template("staff.html", users=users, admin=True, m=request.args.get("m", ""), invite_url="")
+
+
+@app.route("/staff/invite", methods=["POST"])
+@admin_required
+def staff_invite():
+    require_csrf()
+    token = secrets.token_urlsafe(32)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    c = db()
+    c.execute("insert into invite(token_hash,created,expires) values(?,?,?)",
+              (hashlib.sha256(token.encode()).hexdigest(), now.isoformat(timespec="seconds"),
+               (now + datetime.timedelta(hours=24)).isoformat(timespec="seconds")))
+    c.commit()
+    c.close()
+    log("staff invite created")
+    users = db().execute("select id,username,role,active from user order by id").fetchall()
+    return render_template("staff.html", users=users, admin=True, m="Invite link created. It expires in 24 hours and works once.",
+                           invite_url=url_for("register", token=token, _external=True))
 
 
 @app.route("/staff/add", methods=["POST"])

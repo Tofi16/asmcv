@@ -13,7 +13,8 @@ into a one-page bilingual (English / Arabic) A4 CV in PDF.
 
 ## Version 6: six more services
 1. Staff accounts: first start creates user "admin" with the password in ASM_PASSWORD (default asm12345, the app warns until you change it).
-   Admin adds staff in Menu > Staff accounts. Staff cannot delete, download backups or export. Every action in the log shows who did it.
+  Admin adds staff in Menu > Staff accounts or creates a one-time registration invite (expires after 24 hours). Staff cannot delete, download backups or export. Every action in the log shows who did it.
+  Forgot-password help directs staff to an administrator, who can set a temporary password from Staff accounts.
    Login has a brute-force guard (5 wrong tries = 10 minute pause).
 2. Analytics: pipeline funnel, new applicants per month, average days between steps, documents average, flights in 30 days.
 3. Agenda: flights, medical expiries, passport expiries and follow-ups in one timeline; "Add to phone calendar" downloads an .ics file.
