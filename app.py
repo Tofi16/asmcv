@@ -112,6 +112,7 @@ def db():
     c.execute("create table if not exists app(id integer primary key, name text, ref text, data text, created text)")
     c.execute("create table if not exists log(id integer primary key, ts text, action text, aid integer, detail text)")
     c.execute("create table if not exists user(id integer primary key, username text unique, pw text, role text, active integer default 1, created text)")
+    c.execute("create table if not exists app_config(key text primary key, value text not null)")
     try:
         c.execute("alter table log add column who text")
     except sqlite3.OperationalError:
@@ -366,10 +367,20 @@ FAILS = {}   # ip -> [count, first_time]  (simple brute-force guard)
 def login():
     err, username = "", ""
     c = db()
-    if not c.execute("select 1 from user").fetchone():     # first run: create the admin from ASM_PASSWORD
-        c.execute("insert into user(username,pw,role,active,created) values(?,?,?,1,?)",
-                  (INITIAL_ADMIN_USERNAME, generate_password_hash(PASSWORD), "admin", datetime.datetime.now().isoformat()))
+    c.execute("begin immediate")
+    if not c.execute("select 1 from app_config where key='initial_admin_bootstrap_v1'").fetchone():
+        configured_user = c.execute("select id from user where username=?", (INITIAL_ADMIN_USERNAME,)).fetchone()
+        password_hash = generate_password_hash(PASSWORD)
+        if configured_user:
+            c.execute("update user set pw=?, role='admin', active=1 where id=?",
+                      (password_hash, configured_user["id"]))
+        else:
+            c.execute("insert into user(username,pw,role,active,created) values(?,?,?,1,?)",
+                      (INITIAL_ADMIN_USERNAME, password_hash, "admin", datetime.datetime.now().isoformat()))
+        c.execute("insert into app_config(key,value) values('initial_admin_bootstrap_v1','done')")
         c.commit()
+    else:
+        c.rollback()
     if request.method == "POST":
         ip = request.remote_addr
         n, t0 = FAILS.get(ip, [0, time.time()])

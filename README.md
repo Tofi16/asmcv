@@ -37,10 +37,11 @@ Set `AGENCY_PHONE` if needed. Run behind an HTTPS reverse proxy with:
   gunicorn --workers 2 --bind 0.0.0.0:$PORT app:app
 
 On Railway, add `APP_ENV=production`, `SECRET_KEY`, `ASM_USERNAME` (for example, `tofik`), and
-`ASM_PASSWORD` under the service's Variables before deploying. These username and password values seed
-the administrator only when the database has no users. Changing them does not rename or reset an
-existing account on a persistent volume. Generate `SECRET_KEY` locally with the command above; use a
-unique `ASM_PASSWORD` of at least 8 characters. Railway supplies `PORT`, which the included `Procfile` binds to. Attach a
+`ASM_PASSWORD` under the service's Variables before deploying. On the first login page request after
+deployment, the app creates or updates that configured administrator once, including on a database
+that already has users. It does not rename other accounts, and later variable changes do not overwrite
+password changes. Generate `SECRET_KEY` locally with the command above; use a unique `ASM_PASSWORD`
+of at least 8 characters. Railway supplies `PORT`, which the included `Procfile` binds to. Attach a
 persistent volume at `/app/data` so the database and uploaded documents survive redeploys.
 
 The production configuration rejects missing/default secrets, enables secure session cookies, and never
