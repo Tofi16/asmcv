@@ -1,0 +1,5 @@
+[variables]
+PLAYWRIGHT_BROWSERS_PATH = "/app/.cache/ms-playwright"
+
+[phases.build]
+cmds = ["playwright install --with-deps chromium"]

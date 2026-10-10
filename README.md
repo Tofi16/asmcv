@@ -43,6 +43,7 @@ that already has users. It does not rename other accounts, and later variable ch
 password changes. Generate `SECRET_KEY` locally with the command above; use a unique `ASM_PASSWORD`
 of at least 8 characters. Railway supplies `PORT`, which the included `Procfile` binds to. Attach a
 persistent volume at `/app/data` so the database and uploaded documents survive redeploys.
+The included `nixpacks.toml` installs Chromium and its Linux dependencies during the Railway build for PDF generation.
 
 The production configuration rejects missing/default secrets, enables secure session cookies, and never
 starts Flask debug mode. Ensure `data/` is on persistent storage and is included in encrypted, off-site
