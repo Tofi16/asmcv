@@ -368,7 +368,11 @@ def login():
     err, username = "", ""
     c = db()
     c.execute("begin immediate")
-    if not c.execute("select 1 from app_config where key='initial_admin_bootstrap_v1'").fetchone():
+    saved_username = c.execute("select value from app_config where key='initial_admin_username'").fetchone()
+    saved_password = c.execute("select value from app_config where key='initial_admin_password_hash'").fetchone()
+    config_matches = (saved_username and saved_username["value"] == INITIAL_ADMIN_USERNAME
+                      and saved_password and check_password_hash(saved_password["value"], PASSWORD))
+    if not config_matches:
         configured_user = c.execute("select id from user where username=?", (INITIAL_ADMIN_USERNAME,)).fetchone()
         password_hash = generate_password_hash(PASSWORD)
         if configured_user:
@@ -377,7 +381,10 @@ def login():
         else:
             c.execute("insert into user(username,pw,role,active,created) values(?,?,?,1,?)",
                       (INITIAL_ADMIN_USERNAME, password_hash, "admin", datetime.datetime.now().isoformat()))
-        c.execute("insert into app_config(key,value) values('initial_admin_bootstrap_v1','done')")
+        c.execute("insert or replace into app_config(key,value) values('initial_admin_username',?)",
+                  (INITIAL_ADMIN_USERNAME,))
+        c.execute("insert or replace into app_config(key,value) values('initial_admin_password_hash',?)",
+                  (generate_password_hash(PASSWORD),))
         c.commit()
     else:
         c.rollback()
