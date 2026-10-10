@@ -41,8 +41,11 @@ into a one-page bilingual (English / Arabic) A4 CV in PDF.
 - "Send PDF" opens the phone share sheet; on a PC it downloads the PDF.
 
 ## Run
-    pip install -r requirements.txt && playwright install chromium
+    pip install -r requirements.txt
+    playwright install chromium
     export ASM_PASSWORD="..." SECRET_KEY="..." AGENCY_PHONE="+251..."
     python app.py            # production: gunicorn -w 2 -b 127.0.0.1:8000 app:app
 Install the fonts Poppins and Noto Naskh Arabic on the server for the best PDF text.
 Back up data/ (and data/backups) to another device regularly.
+Railway uses the included Dockerfile to install Chromium and its Linux dependencies alongside Playwright.
+The Docker build excludes `data/`, virtual environments, and environment files.
