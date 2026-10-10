@@ -100,10 +100,14 @@ def csrf_token():
     return token
 
 
-def require_csrf():
+def csrf_valid():
     expected = session.get("_csrf_token", "")
     supplied = request.form.get("csrf_token", "")
-    if not expected or not supplied or not secrets.compare_digest(expected, supplied):
+    return bool(expected and supplied and secrets.compare_digest(expected, supplied))
+
+
+def require_csrf():
+    if not csrf_valid():
         abort(400, description="The form expired. Reload the page and try again.")
 
 
@@ -410,8 +414,9 @@ FAILS = {}   # ip -> [count, first_time]  (simple brute-force guard)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "POST":
-        require_csrf()
+    if request.method == "POST" and not csrf_valid():
+        return render_template("login.html", err="This sign-in form expired. Please try again.",
+                               username=request.form.get("username", ""))
     err, username = "", ""
     c = db()
     if not c.execute("select 1 from user").fetchone():     # first run: create the admin from ASM_PASSWORD
