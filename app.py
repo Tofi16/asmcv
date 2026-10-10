@@ -757,7 +757,10 @@ def pdf_bytes(aid, mask=False):
     os.makedirs(CACHE, exist_ok=True)
     f = os.path.join(CACHE, "%d-%d-%s.pdf" % (aid, mask, key))
     if os.path.exists(f):
-        return open(f, "rb").read()
+        cached = open(f, "rb").read()
+        if cached.startswith(b"%PDF-"):
+            return cached
+        os.remove(f)
     html = render_cv(aid, True, mask=mask)
     with sync_playwright() as p:
         b = p.chromium.launch()
@@ -784,6 +787,9 @@ def pdf_bytes(aid, mask=False):
 
 
 def pdf_response(data, name):
+    if not isinstance(data, bytes) or not data.startswith(b"%PDF-"):
+        app.logger.error("Refusing to return invalid PDF: %s", name)
+        abort(500, description="PDF generation failed.")
     r = make_response(data)
     r.headers["Content-Type"] = "application/pdf"
     r.headers["Content-Disposition"] = 'inline; filename="%s"' % name
