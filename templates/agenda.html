@@ -1,9 +1,9 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASM</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">{% include 'pwa.html' %}
-<header class="top"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Home</a></nav></header>
-<main>{% with tab='agenda' %}{% include 'tabs.html' %}{% endwith %}
+<body class="has-nav"><header class="top"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Home</a></nav></header>{% with active='agenda' %}{% include 'nav.html' %}{% endwith %}
+<main>
 <div class="acts" style="margin-bottom:12px"><a class="btn ghost" href="{{ url_for('agenda_ics') }}">Add to phone calendar (.ics)</a></div>
-{% for title, evs in groups %}<section class="card ag" style="--i:{{ loop.index }};border-left-color:{{ 'var(--red)' if title=='Overdue' else 'var(--sky)' }}"><h2><span>{{ title }}</span><span class="pill {{ 'warn' if title=='Overdue' }}">{{ evs|length }}</span></h2>
+<div class="agrid">{% for title, evs in groups %}<section class="card ag" style="--i:{{ loop.index }};border-left-color:{{ 'var(--red)' if title=='Overdue' else 'var(--sky)' }}"><h2><span>{{ title }}</span><span class="pill {{ 'warn' if title=='Overdue' }}">{{ evs|length }}</span></h2>
 {% for e in evs %}<a class="ev {{ e.kind }}" href="{{ url_for('case', aid=e.id) }}" style="--i:{{ loop.index }}"><span class="dt"><b>{{ e.date.strftime('%d') }}</b>{{ e.date.strftime('%b') }}</span>
 <span class="tx"><b>{{ e.name }}</b><small>{{ e.text }}</small></span><span class="cd">{{ 'today' if e.days==0 else (e.days ~ ' d' if e.days>0 else (-e.days) ~ ' d ago') }}</span></a>{% endfor %}</section>
-{% else %}<p class="empty">Nothing scheduled. Flights, medical and passport expiries and follow-ups will appear here.</p>{% endfor %}</main></html>
+{% else %}<p class="empty">Nothing scheduled. Flights, medical and passport expiries and follow-ups will appear here.</p>{% endfor %}</div></main></html>

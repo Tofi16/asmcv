@@ -1,22 +1,22 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASM · Applicants</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">{% include 'pwa.html' %}
-<header class="top"><svg class="plane" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM">
-<nav><a class="btn" href="{{ url_for('edit') }}">+ New applicant</a><details class="menu"><summary>⋯</summary><div><a href="{{ url_for('activity') }}">Activity log</a><a href="{{ url_for('account') }}">My password</a>{% if session.get('role')=='admin' %}<a href="{{ url_for('staff') }}">Staff accounts</a><a href="{{ url_for('backup') }}">Download backup</a><a href="{{ url_for('export') }}">Export to Excel (CSV)</a>{% endif %}<a href="{{ url_for('logout') }}">Sign out ({{ session.get('user') }})</a></div></details></nav></header>
-<main>{% with tab='apps' %}{% include 'tabs.html' %}{% endwith %}{% if default_pw %}<div class="banner" style="--i:1;background:#fde2e2;color:#8a1c1c">You are still using the factory password. <a href="{{ url_for('account') }}">Change it now</a>.</div>{% endif %}<form class="search" style="--i:1"><input name="q" value="{{ q }}" placeholder="Search name, reference, passport"><button class="btn">Search</button></form>
+<body class="has-nav"><header class="top"><svg class="plane" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM">
+</header>{% with active='apps' %}{% include 'nav.html' %}{% endwith %}
+<main>{% if default_pw %}<div class="banner" style="--i:1;background:#fde2e2;color:#8a1c1c">You are still using the factory password. <a href="{{ url_for('account') }}">Change it now</a>.</div>{% endif %}<form class="search" style="--i:1"><input name="q" value="{{ q }}" placeholder="Search name, reference, passport"><button class="btn">Search</button></form>
 {% if attn %}<section class="card attn" style="--i:2;border-left-color:var(--red)"><h2><span>Needs attention</span><span class="pill warn">{{ attn|length }}</span></h2>
 {% for a in attn %}<a class="al {{ a.lv }}" href="{{ url_for('case', aid=a.id) }}" style="--i:{{ loop.index }}"><i></i><b>{{ a.name }}</b><span>{{ a.msg }}</span></a>{% endfor %}</section>{% endif %}
 <div class="chips" style="--i:3"><a class="chip {{ 'on' if sel=='' }}" href="{{ url_for('index', q=q) }}"><b data-n="{{ total }}">0</b><small>All</small></a>
 {% for n,a in STAGES %}<a class="chip {{ 'on' if sel==loop.index0|string }}" href="{{ url_for('index', q=q, s=loop.index0) }}"><b data-n="{{ counts[loop.index0] }}">0</b><small>{{ n }}</small></a>{% endfor %}</div>
-{% for it in items %}<article class="row" style="--i:{{ loop.index }}"><div class="rt">
+<div class="list">{% for it in items %}<article class="row" style="--i:{{ loop.index }}"><div class="rt">
 <label class="sel"><input type="checkbox" value="{{ it.id }}"><span></span></label>
 {% if it.face %}<img class="th" src="{{ it.face }}" alt="">{% else %}<span class="th"></span>{% endif %}
 <div class="who"><h3>{{ it.d.name }}</h3><p>{{ it.d.ref }}{% if it.d.ref and it.d.post %} · {% endif %}{{ it.d.post }}</p></div>
 <div class="acts"><a class="btn red" href="{{ url_for('case', aid=it.id) }}">Case</a><a class="btn" href="{{ url_for('cv', aid=it.id) }}">CV</a><a class="btn ghost" href="{{ url_for('edit', aid=it.id) }}">Edit</a>
-{% if session.get('role')=='admin' %}<form method="post" action="{{ url_for('delete', aid=it.id) }}" onsubmit="return confirm('Delete {{ it.d.name }}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn danger">Delete</button></form>{% endif %}</div></div>
+{% if session.get('role')=='admin' %}<form method="post" action="{{ url_for('delete', aid=it.id) }}" onsubmit="return confirm('Delete {{ it.d.name }}?')"><button class="btn danger">Delete</button></form>{% endif %}</div></div>
 <div class="bar"><i style="--w:{{ (it.stage/(STAGES|length-1)*100)|round }}%"></i></div>
 <div class="meta"><span><span class="pill">{{ STAGES[it.stage][0] }}</span> <span class="ar" dir="rtl">{{ STAGES[it.stage][1] }}</span></span>
 <span>{% for w in it.warn %}<span class="pill warn">{{ w }}</span> {% endfor %}<span class="pill {{ 'ok' if it.ready==100 }}">Docs {{ it.ready }}%</span></span></div></article>
-{% else %}<p class="empty">{% if q or sel!='' %}No applicants match.{% else %}No applicants yet. Add the first one with New applicant.{% endif %}</p>{% endfor %}</main>
+{% else %}<p class="empty">{% if q or sel!='' %}No applicants match.{% else %}No applicants yet. Add the first one with New applicant.{% endif %}</p>{% endfor %}</div></main>
 <div class="packbar" id="pb"><span><b id="pc">0</b> selected</span><a class="btn red" id="pl" href="#">Build CV pack (PDF)</a></div>
 <script>document.querySelectorAll('[data-n]').forEach(e=>{const n=+e.dataset.n;let i=0;if(!n){e.textContent=0;return}const t=setInterval(()=>{i++;e.textContent=i;if(i>=n)clearInterval(t)},Math.max(30,500/n))});
 const pb=document.getElementById('pb');document.addEventListener('change',()=>{const ids=[...document.querySelectorAll('.sel input:checked')].map(x=>x.value);document.getElementById('pc').textContent=ids.length;document.getElementById('pl').href='{{ url_for("pack") }}?ids='+ids.join(',');pb.classList.toggle('show',ids.length>0)})</script></html>

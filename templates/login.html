@@ -67,7 +67,6 @@ h1 span{opacity:0;transform:translateY(14px);display:inline-block;animation:lett
 <main class="stage"><div class="badge"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"></div>
  <h1 id="t">ASM CV Studio</h1><p class="sub">እንኳን ደህና መጡ · Welcome back</p>
  <form class="card {{ 'shake' if err }}" method="post" id="lf">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <div class="f"><input id="un" name="username" placeholder=" " required autofocus autocapitalize="none" autocomplete="username" value="{{ username }}"><label for="un">Username</label></div>
   <div class="f"><input id="pw" type="password" name="password" placeholder=" " required autocomplete="current-password"><label for="pw">Password</label>
    <button type="button" class="eye" id="eye" aria-label="Show password"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>

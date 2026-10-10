@@ -1,0 +1,18 @@
+{% set admin = session.get('role')=='admin' %}
+<aside class="side"><a class="brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"></a>
+<a class="new" href="{{ url_for('edit') }}">+ New applicant</a>
+<a class="{{ 'on' if active=='apps' }}" href="{{ url_for('index') }}">Applicants</a><a class="{{ 'on' if active=='agenda' }}" href="{{ url_for('agenda') }}">Agenda</a><a class="{{ 'on' if active=='stats' }}" href="{{ url_for('stats') }}">Analytics</a>
+<hr><a class="{{ 'on' if active=='more' }}" href="{{ url_for('activity') }}">Activity log</a><a href="{{ url_for('account') }}">My password</a>{% if admin %}<a href="{{ url_for('staff') }}">Staff accounts</a><a href="{{ url_for('backup') }}">Backup</a><a href="{{ url_for('export') }}">Export (CSV)</a>{% endif %}
+<div class="who"><b>{{ session.get('user') }}</b><small>{{ session.get('role') }}</small><a href="{{ url_for('logout') }}">Sign out</a><small class="kb">Keys: <kbd>/</kbd> search · <kbd>n</kbd> new · <kbd>a</kbd> agenda · <kbd>h</kbd> home</small></div></aside>
+<nav class="bnav"><a class="{{ 'on' if active=='apps' }}" href="{{ url_for('index') }}"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.4 2.6-5.5 6-5.5s6 2.1 6 5.5"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.6c2.8.1 5 1.9 5 4.9"/></svg>Applicants</a>
+<a class="{{ 'on' if active=='agenda' }}" href="{{ url_for('agenda') }}"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Agenda</a>
+<a class="plus" href="{{ url_for('edit') }}" aria-label="New applicant">+</a>
+<a class="{{ 'on' if active=='stats' }}" href="{{ url_for('stats') }}"><svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-7"/></svg>Analytics</a>
+<button type="button" id="more" class="{{ 'on' if active=='more' }}"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>More</button></nav>
+<div class="bsheet" id="bsheet"><a href="{{ url_for('activity') }}">Activity log</a><a href="{{ url_for('account') }}">My password</a>{% if admin %}<a href="{{ url_for('staff') }}">Staff accounts</a><a href="{{ url_for('backup') }}">Download backup</a><a href="{{ url_for('export') }}">Export to Excel (CSV)</a>{% endif %}<a href="{{ url_for('logout') }}">Sign out ({{ session.get('user') }})</a></div>
+<script>
+const sh=document.getElementById('bsheet');document.getElementById('more').onclick=e=>{e.stopPropagation();sh.classList.toggle('show')};document.addEventListener('click',e=>{if(!e.target.closest('#bsheet'))sh.classList.remove('show')});
+document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+const go={n:"{{ url_for('edit') }}",a:"{{ url_for('agenda') }}",h:"{{ url_for('index') }}"}[e.key];if(go){location.href=go;return}
+if(e.key==='/'){const q=document.querySelector('input[name=q]');if(q){e.preventDefault();q.focus()}}});
+</script>

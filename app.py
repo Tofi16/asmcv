@@ -2,7 +2,6 @@ import os, io, re, csv, time, json, glob, hashlib, sqlite3, base64, datetime, se
 from functools import wraps
 from flask import (Flask, render_template, request, redirect, url_for, session,
                    send_file, abort, make_response, send_from_directory)
-from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from PIL import Image, ImageOps, ImageFilter
 
@@ -12,24 +11,9 @@ UP = os.path.join(DATA, "uploads")
 os.makedirs(UP, exist_ok=True)
 
 app = Flask(__name__)
-APP_ENV = os.environ.get("APP_ENV", "development").lower()
-SECRET_KEY = os.environ.get("SECRET_KEY", "change-this-secret")
-INITIAL_ADMIN_USERNAME = os.environ.get("ASM_USERNAME", "admin").strip().lower()
+app.secret_key = os.environ.get("SECRET_KEY", "change-this-secret")
+app.config.update(SESSION_COOKIE_SAMESITE="Lax", MAX_CONTENT_LENGTH=40 * 1024 * 1024)
 PASSWORD = os.environ.get("ASM_PASSWORD", "asm12345")
-if APP_ENV == "production":
-    if len(SECRET_KEY) < 32 or SECRET_KEY == "change-this-secret":
-        raise RuntimeError("Production requires a random SECRET_KEY of at least 32 characters.")
-    if not re.fullmatch(r"[a-z0-9._-]{3,20}", INITIAL_ADMIN_USERNAME):
-        raise RuntimeError("Production ASM_USERNAME must be 3-20 letters, numbers, dots, underscores, or hyphens.")
-    if len(PASSWORD) < 8 or PASSWORD == "asm12345":
-        raise RuntimeError("Production requires a non-default ASM_PASSWORD of at least 8 characters.")
-app.secret_key = SECRET_KEY
-app.config.update(
-    SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=APP_ENV == "production",
-    MAX_CONTENT_LENGTH=40 * 1024 * 1024,
-)
-CSRFProtect(app)
 AGENCY_PHONE = os.environ.get("AGENCY_PHONE", "")
 MEDICAL_MONTHS = int(os.environ.get("MEDICAL_MONTHS", "2"))   # how long a medical stays valid
 BK = os.path.join(DATA, "backups")
@@ -95,8 +79,10 @@ L = {f[0]: (f[1], f[2]) for f in FIELDS}
 SKILLS = ["cooking", "cleaning", "washing", "ironing", "baby", "elderly"]
 KINDS = [("face", "Face photo", "ጉርድ"), ("body", "Full-body photo", "ሙሉ ፎቶ"), ("passport", "Passport page", "ፓስፖርት")]
 DOCS = [("idcard", "Traveler ID", "የተጓዥ መታወቂያ"), ("guarantor_id", "Guarantor ID", "የተያዥ መታወቂያ"),
+        ("emergency_id", "Emergency contact ID", "የአደጋ ጊዜ ተጠሪ መታወቂያ"),
         ("coc1", "COC certificate 1", "COC 1"), ("coc2", "COC certificate 2", "COC 2"),
-        ("consent", "Signed consent", "የፈቃድ ቅጽ")]
+        ("medical", "Medical certificate", "የሜዲካል ሰርተፊኬት"), ("consent", "Signed consent", "የፈቃድ ቅጽ")]
+DOC_EXT = (".jpg", ".jpeg", ".png", ".webp", ".pdf")
 STAGES = [("CV ready", "ሲቪ ዝግጁ"), ("Selected", "ተመርጧል"), ("Medical", "ሜዲካል"),
           ("Embassy", "ኤምባሲ"), ("Ticket booked", "ትኬት"), ("Travelled", "ተጓዘ")]
 
@@ -112,7 +98,6 @@ def db():
     c.execute("create table if not exists app(id integer primary key, name text, ref text, data text, created text)")
     c.execute("create table if not exists log(id integer primary key, ts text, action text, aid integer, detail text)")
     c.execute("create table if not exists user(id integer primary key, username text unique, pw text, role text, active integer default 1, created text)")
-    c.execute("create table if not exists app_config(key text primary key, value text not null)")
     try:
         c.execute("alter table log add column who text")
     except sqlite3.OperationalError:
@@ -216,12 +201,34 @@ def save_photo(f, aid, kind):
 def photos(aid, embed=False, kinds=KINDS):
     out = {}
     for k, _, _ in kinds:
-        p = os.path.join(UP, str(aid), k + ".jpg")
-        if os.path.exists(p):
-            if embed:
-                out[k] = "data:image/jpeg;base64," + base64.b64encode(open(p, "rb").read()).decode()
-            else:
-                out[k] = url_for("media", aid=aid, kind=k) + "?v=%d" % os.path.getmtime(p)
+        p = docfile(aid, k)
+        if not p:
+            continue
+        ext = os.path.splitext(p)[1].lower()
+        if embed:
+            if ext != ".pdf":
+                out[k] = "data:image/%s;base64," % ext[1:].replace("jpg", "jpeg") + base64.b64encode(open(p, "rb").read()).decode()
+        else:
+            out[k] = url_for("media", aid=aid, kind=k) + "?v=%d" % os.path.getmtime(p) + ("#pdf" if ext == ".pdf" else "")
+    return out
+
+
+def safe(s):
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", s or "applicant").strip("_") or "applicant"
+
+
+def docinfo(aid, d):
+    """Everything the Documents tab needs: one entry per document, with download links."""
+    num = {"passport": d.get("passport_no"), "idcard": d.get("id_no"), "guarantor_id": d.get("guarantor_id_no"),
+           "coc1": d.get("coc1_no"), "coc2": d.get("coc2_no"),
+           "emergency_id": " · ".join(x for x in (d.get("contact_name"), d.get("contact_phone")) if x)}
+    out = []
+    for k, t, am in KINDS[2:] + DOCS:
+        p = docfile(aid, k)
+        ext = os.path.splitext(p)[1].lower() if p else ""
+        out.append(dict(k=k, t=t, am=am, ok=bool(p), pdf=ext == ".pdf", ext=ext[1:].upper(), kb=(os.path.getsize(p) // 1024) if p else 0,
+                        num=num.get(k) or "", name="%s_%s%s" % (safe(d.get("name")), safe(t), ext),
+                        url=url_for("media", aid=aid, kind=k) if p else "", dl=url_for("doc_download", aid=aid, kind=k) if p else ""))
     return out
 
 
@@ -230,8 +237,29 @@ def track(d):
     return {"stage": int(t.get("stage", 0)), "dates": t.get("dates", {}), "note": t.get("note", "")}
 
 
+def docfile(aid, k):
+    """Path of the stored file for a photo/document kind (any extension), or None."""
+    for q in glob.glob(os.path.join(UP, str(aid), k + ".*")):
+        return q
+    return None
+
+
 def has(aid, k):
-    return os.path.exists(os.path.join(UP, str(aid), k + ".jpg"))
+    return bool(docfile(aid, k))
+
+
+def save_doc(f, aid, kind):
+    """Documents keep the ORIGINAL file (PDF or image), so downloads are exactly what was uploaded."""
+    if not f or not f.filename:
+        return
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in DOC_EXT:
+        return
+    d = os.path.join(UP, str(aid))
+    os.makedirs(d, exist_ok=True)
+    for old in glob.glob(os.path.join(d, kind + ".*")):
+        os.remove(old)
+    f.save(os.path.join(d, kind + (".jpg" if ext == ".jpeg" else ext)))
 
 
 def readiness(d, aid):
@@ -239,11 +267,13 @@ def readiness(d, aid):
     items = [
         (("Traveler ID", "የተጓዥ መታወቂያ"), h("idcard")),
         (("Guarantor ID", "የተያዥ መታወቂያ"), bool(d.get("guarantor_name")) and h("guarantor_id")),
-        (("Labor ID", "Labor ID"), bool(d.get("labor_id"))),
+        (("Emergency contact ID", "የአደጋ ጊዜ ተጠሪ መታወቂያ"), h("emergency_id")),
+        (("Labor ID", "የLabor ID ቁጥር"), bool(d.get("labor_id"))),
         (("COC 1", "ሰርተፊኬት 1"), h("coc1")),
         (("COC 2", "ሰርተፊኬት 2"), h("coc2")),
-        (("Passport", "ፓስፖርት"), bool(d.get("passport_no")) and h("passport")),
+        (("Medical certificate", "የሜዲካል ሰርተፊኬት"), h("medical")),
         (("Consent", "ፈቃድ"), h("consent")),
+        (("Passport", "ፓስፖርት"), bool(d.get("passport_no")) and h("passport")),
     ]
     return items, round(100 * sum(bool(ok) for _, ok in items) / len(items))
 
@@ -309,12 +339,6 @@ def badges(d, aid):
     ex = iso(d.get("expiry_date"))
     if ex and ex > today + datetime.timedelta(days=183):
         out.append(("Passport valid to %s" % ex.strftime("%b %Y"), "جواز ساري"))
-    if has(aid, "coc1") and has(aid, "coc2"):
-        out.append(("COC certified ×2", "شهادات COC"))
-    t = track(d)
-    md = iso(t["dates"].get("2"))
-    if t["stage"] >= 2 and md:
-        out.append(("Medical done %s" % md.strftime("%d %b %Y"), "فحص طبي مكتمل"))
     return out
 
 
@@ -367,27 +391,10 @@ FAILS = {}   # ip -> [count, first_time]  (simple brute-force guard)
 def login():
     err, username = "", ""
     c = db()
-    c.execute("begin immediate")
-    saved_username = c.execute("select value from app_config where key='initial_admin_username'").fetchone()
-    saved_password = c.execute("select value from app_config where key='initial_admin_password_hash'").fetchone()
-    config_matches = (saved_username and saved_username["value"] == INITIAL_ADMIN_USERNAME
-                      and saved_password and check_password_hash(saved_password["value"], PASSWORD))
-    if not config_matches:
-        configured_user = c.execute("select id from user where username=?", (INITIAL_ADMIN_USERNAME,)).fetchone()
-        password_hash = generate_password_hash(PASSWORD)
-        if configured_user:
-            c.execute("update user set pw=?, role='admin', active=1 where id=?",
-                      (password_hash, configured_user["id"]))
-        else:
-            c.execute("insert into user(username,pw,role,active,created) values(?,?,?,1,?)",
-                      (INITIAL_ADMIN_USERNAME, password_hash, "admin", datetime.datetime.now().isoformat()))
-        c.execute("insert or replace into app_config(key,value) values('initial_admin_username',?)",
-                  (INITIAL_ADMIN_USERNAME,))
-        c.execute("insert or replace into app_config(key,value) values('initial_admin_password_hash',?)",
-                  (generate_password_hash(PASSWORD),))
+    if not c.execute("select 1 from user").fetchone():     # first run: create the admin from ASM_PASSWORD
+        c.execute("insert into user(username,pw,role,active,created) values(?,?,?,1,?)",
+                  ("admin", generate_password_hash(PASSWORD), "admin", datetime.datetime.now().isoformat()))
         c.commit()
-    else:
-        c.rollback()
     if request.method == "POST":
         ip = request.remote_addr
         n, t0 = FAILS.get(ip, [0, time.time()])
@@ -470,7 +477,8 @@ def index():
         if fd and t["stage"] == 4 and 0 <= (fd - today).days <= 7:
             add("blue", "Flight in %d days" % (fd - today).days)
         if t["stage"] >= 1 and pct < 100:
-            add("red" if t["stage"] >= 2 else "amb", "Missing: " + ", ".join(i[0][0] for i in rd if not i[1]))
+            miss = [i[0][0] for i in rd if not i[1]]
+            add("red" if t["stage"] >= 2 else "amb", ("Missing: " + ", ".join(miss)) if len(miss) <= 2 else "%d documents missing" % len(miss))
         if soon(d.get("expiry_date", "")):
             warn.append("Passport expires within 6 months"); add("amb", "Passport expires within 6 months")
         if pp.get(d.get("passport_no", "").strip().upper(), 0) > 1:
@@ -506,9 +514,9 @@ def case(aid):
     if t["note"]:
         msg += "\n" + t["note"]
     return render_template("case.html", d=d, t=t, aid=aid, items=items, pct=pct, med=medical(t),
-                           ph=photos(aid, kinds=KINDS + DOCS), wa=wa(d.get("phone")), msg=msg,
+                           ph=photos(aid, kinds=KINDS[:1]), wa=wa(d.get("phone")), msg=msg,
                            flight_days=(fd - datetime.date.today()).days if fd else None,
-                           notes=d.get("_notes", []), offers=d.get("_offers", []), employers=employers(),
+                           notes=d.get("_notes", []), offers=d.get("_offers", []), employers=employers(), docs=docinfo(aid, d),
                            soon=soon(d.get("expiry_date", "")), today=datetime.date.today().isoformat())
 
 
@@ -561,8 +569,10 @@ def edit(aid):
             aid = c.execute("insert into app(name,ref,data,created) values(?,?,?,?)",
                             (d["name"], d["ref"], json.dumps(d), datetime.datetime.now().isoformat())).lastrowid
         c.commit()
-        for k, _, _ in KINDS + DOCS:
+        for k, _, _ in KINDS:
             save_photo(request.files.get(k), aid, k)
+        for k, _, _ in DOCS:
+            save_doc(request.files.get(k), aid, k)
         log("saved", aid, d.get("name", ""))
         return redirect(url_for("cv", aid=aid))
     return render_template("form.html", d=dict(d, exp=exp_list(d)), aid=aid, ph=photos(aid, kinds=KINDS + DOCS) if aid else {})
@@ -582,11 +592,34 @@ def delete(aid):
     return redirect(url_for("index"))
 
 
+VALID_KINDS = {k for k, _, _ in KINDS + DOCS}
+
+
 @app.route("/media/<int:aid>/<kind>")
 @login_required
 def media(aid, kind):
-    p = os.path.join(UP, str(aid), os.path.basename(kind) + ".jpg")
-    return send_file(p) if os.path.exists(p) else abort(404)
+    p = docfile(aid, kind) if kind in VALID_KINDS else None
+    return send_file(p) if p else abort(404)
+
+
+@app.route("/doc/<int:aid>/<kind>/download")
+@login_required
+def doc_download(aid, kind):
+    p = docfile(aid, kind) if kind in VALID_KINDS else None
+    if not p:
+        abort(404)
+    title = {k: t for k, t, _ in KINDS + DOCS}[kind]
+    return send_file(p, as_attachment=True, download_name="%s_%s%s" % (safe(load(aid).get("name")), safe(title), os.path.splitext(p)[1]))
+
+
+@app.route("/doc/<int:aid>/<kind>/delete", methods=["POST"])
+@login_required
+def doc_delete(aid, kind):
+    if kind in VALID_KINDS and kind not in ("face", "body"):
+        for q in glob.glob(os.path.join(UP, str(aid), kind + ".*")):
+            os.remove(q)
+        log("document removed", aid, "%s: %s" % (load(aid).get("name", ""), kind))
+    return redirect(url_for("case", aid=aid) + "#docs")
 
 
 def logo(embed):
@@ -873,23 +906,71 @@ def render_pdf(html):
     return pdf
 
 
-@app.route("/case/<int:aid>/file.pdf")
-@login_required
-def travel_file(aid):
+def travel_pdf(aid):
+    """Summary page + every document on its own page. Uploaded PDFs are appended as their original pages."""
+    from pypdf import PdfReader, PdfWriter
     d = load(aid)
     items, pct = readiness(d, aid)
     cap = {"passport": d.get("passport_no", ""), "idcard": d.get("id_no", ""), "coc1": d.get("coc1_no", ""), "coc2": d.get("coc2_no", ""),
-           "guarantor_id": " · ".join(x for x in (d.get("guarantor_name"), d.get("guarantor_phone"), d.get("guarantor_id_no")) if x)}
-    ph = photos(aid, True, KINDS + DOCS)
-    pages = [(t, k, cap.get(k, "")) for k, t in (("passport", "Passport page"), ("idcard", "Traveler ID"), ("guarantor_id", "Guarantor ID"),
-                                                  ("coc1", "COC certificate 1"), ("coc2", "COC certificate 2"), ("consent", "Signed consent")) if ph.get(k)]
-    facts = [(L[k][0], pretty(d)[k]) for k in ("ref", "post", "phone", "nationality", "dob", "passport_no", "expiry_date", "id_no", "labor_id",
-                                                "guarantor_name", "guarantor_phone", "guarantor_id_no", "coc1_no", "coc2_no",
-                                                "employer", "destination", "visa_no", "flight_date", "airline") if d.get(k)]
-    html = render_template("filepack.html", d=d, t=track(d), items=items, pct=pct, ph=ph, pages=pages, facts=facts, logo=logo(True),
-                           issued=datetime.date.today().strftime("%d %b %Y"))
-    log("travel file", aid, d.get("name", ""))
-    return pdf_response(render_pdf(html), (d.get("name") or "case").replace(" ", "_") + "_travel_file.pdf")
+           "guarantor_id": " · ".join(x for x in (d.get("guarantor_name"), d.get("guarantor_phone"), d.get("guarantor_id_no")) if x),
+           "emergency_id": " · ".join(x for x in (d.get("contact_name"), d.get("contact_phone")) if x)}
+    pages = []
+    for k, t, _ in KINDS[2:] + DOCS:
+        q = docfile(aid, k)
+        if not q:
+            continue
+        ext = os.path.splitext(q)[1].lower()
+        img = None if ext == ".pdf" else "data:image/%s;base64," % ext[1:].replace("jpg", "jpeg") + base64.b64encode(open(q, "rb").read()).decode()
+        pages.append(dict(title=t, cap=cap.get(k, ""), img=img, pdf=q if ext == ".pdf" else None))
+    pd = pretty(d)
+    facts = [(L[k][0], pd[k]) for k in ("ref", "post", "phone", "nationality", "dob", "passport_no", "expiry_date", "id_no", "labor_id",
+                                         "guarantor_name", "guarantor_phone", "guarantor_id_no", "coc1_no", "coc2_no", "contact_name", "contact_phone",
+                                         "employer", "destination", "visa_no", "flight_date", "airline") if d.get(k)]
+    html = render_template("filepack.html", d=d, t=track(d), items=items, pct=pct, ph=photos(aid, True, KINDS[:1]), pages=pages, facts=facts,
+                           logo=logo(True), issued=datetime.date.today().strftime("%d %b %Y"))
+    raw = PdfReader(io.BytesIO(render_pdf(html)))
+    w = PdfWriter()
+    w.add_page(raw.pages[0])
+    for i, pg in enumerate(pages):
+        w.add_page(raw.pages[i + 1])
+        if pg["pdf"]:
+            for q in PdfReader(pg["pdf"]).pages:
+                w.add_page(q)
+    buf = io.BytesIO()
+    w.write(buf)
+    return buf.getvalue()
+
+
+@app.route("/case/<int:aid>/file.pdf")
+@login_required
+def travel_file(aid):
+    log("travel file", aid, load(aid).get("name", ""))
+    return pdf_response(travel_pdf(aid), safe(load(aid).get("name")) + "_travel_file.pdf")
+
+
+@app.route("/case/<int:aid>/bundle.zip")
+@login_required
+def bundle(aid):
+    """Everything about one applicant in one download: CV, employer copy, every document, travel file, numbers."""
+    d = load(aid)
+    base = safe(d.get("name"))
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("1_CV/%s_CV.pdf" % base, pdf_bytes(aid, False))
+        z.writestr("1_CV/%s_CV_employer_copy.pdf" % base, pdf_bytes(aid, True))
+        for k, t, _ in KINDS[2:] + DOCS:
+            q = docfile(aid, k)
+            if q:
+                z.write(q, "2_Documents/%s_%s%s" % (base, safe(t), os.path.splitext(q)[1]))
+        z.writestr("3_Travel_file/%s_travel_file.pdf" % base, travel_pdf(aid))
+        nums = [(L[k][0], d[k]) for k in ("passport_no", "id_no", "labor_id", "guarantor_name", "guarantor_phone", "guarantor_id_no", "coc1_no", "coc2_no",
+                                          "contact_name", "contact_phone", "contact_address", "employer", "visa_no", "destination", "flight_date", "airline") if d.get(k)]
+        z.writestr("Numbers.txt", "\r\n".join("%s: %s" % x for x in [("Name", d.get("name", ""))] + nums))
+    log("bundle downloaded", aid, d.get("name", ""))
+    r = make_response(buf.getvalue())
+    r.headers["Content-Type"] = "application/zip"
+    r.headers["Content-Disposition"] = 'attachment; filename="%s_ASM_file.zip"' % base
+    return r
 
 
 @app.route("/staff")
@@ -960,4 +1041,4 @@ def account():
 
 
 if __name__ == "__main__":
-    app.run(debug=APP_ENV != "production", host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)

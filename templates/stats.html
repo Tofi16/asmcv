@@ -1,13 +1,13 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASM</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">{% include 'pwa.html' %}
-<header class="top"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Home</a></nav></header>
-<main>{% with tab='stats' %}{% include 'tabs.html' %}{% endwith %}
+<body class="has-nav"><header class="top"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Home</a></nav></header>{% with active='stats' %}{% include 'nav.html' %}{% endwith %}
+<main>
 <div class="kpis" style="--i:1"><div class="kpi"><b data-n="{{ total }}">0</b><small>Applicants</small></div><div class="kpi"><b data-n="{{ moving }}">0</b><small>In progress</small></div><div class="kpi"><b data-n="{{ travelled }}">0</b><small>Travelled</small></div><div class="kpi"><b data-n="{{ flights }}">0</b><small>Flights in 30 days</small></div></div>
-<section class="card" style="--i:2"><h2><span>Pipeline</span><span class="ar" dir="rtl">مسار الطلبات</span></h2>
+<div class="sgrid"><section class="card" style="--i:2"><h2><span>Pipeline</span><span class="ar" dir="rtl">مسار الطلبات</span></h2>
 {% set mx = ([counts|max,1])|max %}{% for n,a in STAGES %}<div class="fn"><span>{{ n }}</span><div><i style="--w:{{ (counts[loop.index0]/mx*100)|round }}%;--d:{{ loop.index0 }}"></i></div><b>{{ counts[loop.index0] }}</b></div>{% endfor %}</section>
 <section class="card" style="--i:3"><h2><span>New applicants, last 6 months</span></h2>
 {% set mk = ([keys|map(attribute=1)|max,1])|max %}<div class="cols">{% for m,c in keys %}<div><i style="--h:{{ (c/mk*100)|round }}%;--d:{{ loop.index0 }}"></i><b>{{ c }}</b><small>{{ m }}</small></div>{% endfor %}</div></section>
 <section class="card" style="--i:4"><h2><span>Average days between steps</span></h2>
 {% for a,b,d in gaps %}<div class="gp"><span>{{ a }} &rarr; {{ b }}</span><b>{{ d }} d</b></div>{% else %}<p class="empty" style="padding:8px">Appears after cases move through the steps.</p>{% endfor %}</section>
-<section class="card" style="--i:5;display:flex;align-items:center;gap:16px"><div class="ring" style="--t:{{ avg_docs }}"><span>{{ avg_docs }}%</span></div><div><h2 style="margin:0">Documents complete</h2><p style="margin:2px 0 0;color:var(--mut);font-size:14px">Average across all applicants.</p></div></section></main>
+<section class="card" style="--i:5;display:flex;align-items:center;gap:16px"><div class="ring" style="--t:{{ avg_docs }}"><span>{{ avg_docs }}%</span></div><div><h2 style="margin:0">Documents complete</h2><p style="margin:2px 0 0;color:var(--mut);font-size:14px">Average across all applicants.</p></div></section></div></main>
 <script>document.querySelectorAll('[data-n]').forEach(e=>{const n=+e.dataset.n;let i=0;if(!n){e.textContent=0;return}const t=setInterval(()=>{i++;e.textContent=i;if(i>=n)clearInterval(t)},Math.max(30,500/n))})</script></html>

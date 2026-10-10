@@ -21,31 +21,27 @@ into a one-page bilingual (English / Arabic) A4 CV in PDF.
 5. Sent to employers: record which employer received a CV and the reply (Sent / Interview / Accepted / Rejected); no reply after 7 days is flagged.
 6. Travel file for the embassy: one PDF with a summary page and every scan on its own page.
 
+## Version 7: CV and documents are separate, but live in the same applicant folder
+- The CV shows only the personal details, skills, experience, passport and the three photos (emergency contact name/phone stay, as in sample 2).
+  Labor ID, COC, medical certificate and all ID cards never appear on the CV.
+- Documents tab (per applicant): traveler ID, guarantor ID, emergency contact ID, COC 1, COC 2, medical certificate, signed consent,
+  passport page. PDF or photo; the ORIGINAL file is kept and each one has its own Download button.
+- Labor ID stays a number (shown in the Numbers list with a Copy button).
+- "Download everything (ZIP)": CV, employer copy, every document, travel file, Numbers.txt. "Send files on WhatsApp" shares the
+  original files from the phone (HTTPS needed; otherwise the ZIP downloads).
+- Moving a case to Embassy needs all 9 document checks complete.
+- Travel file PDF now appends uploaded PDF documents page by page.
+
+## Version 8: phone + PC
+- Phone: bottom bar (Applicants, Agenda, big + New, Analytics, More), thumb-friendly buttons, tabs on the applicant page.
+- PC: left sidebar, wide two-column pages (applicant page shows Progress, CV and Documents at once; the form shows CV details
+  and Documents side by side), 2-3 column applicant grid, keyboard shortcuts: / search, n new applicant, a agenda, h home.
+- Tested for no sideways scrolling at 390 px (phone), 820 px (tablet) and 1440 px (PC).
+- "Send PDF" opens the phone share sheet; on a PC it downloads the PDF.
+
 ## Run
-Install dependencies and the browser used for PDF rendering:
-
-  pip install -r requirements.txt
-  playwright install chromium
-
-For local development, run `python app.py`. The development defaults are not suitable for a public deployment.
-
-For production, set `APP_ENV=production`, `SECRET_KEY` to a random value of at least 32 characters,
-`ASM_USERNAME` to the first administrator's username, and `ASM_PASSWORD` to a unique password of at least 8 characters before starting the WSGI server.
-For example, generate the session key with `python -c "import secrets; print(secrets.token_hex(32))"`.
-Set `AGENCY_PHONE` if needed. Run behind an HTTPS reverse proxy with:
-
-  gunicorn --workers 2 --bind 0.0.0.0:$PORT app:app
-
-On Railway, add `APP_ENV=production`, `SECRET_KEY`, `ASM_USERNAME` (for example, `tofik`), and
-`ASM_PASSWORD` under the service's Variables before deploying. On the first login page request after
-deployment, the app creates or updates that configured administrator once, including on a database
-that already has users. It does not rename other accounts, and later variable changes do not overwrite
-password changes. Generate `SECRET_KEY` locally with the command above; use a unique `ASM_PASSWORD`
-of at least 8 characters. Railway supplies `PORT`, which the included `Procfile` binds to. Attach a
-persistent volume at `/app/data` so the database and uploaded documents survive redeploys.
-The included `nixpacks.toml` installs Chromium and its Linux dependencies during the Railway build for PDF generation.
-
-The production configuration rejects missing/default secrets, enables secure session cookies, and never
-starts Flask debug mode. Ensure `data/` is on persistent storage and is included in encrypted, off-site
-backups; it contains the database, uploaded identity documents, and generated backups. Install the fonts
-Poppins and Noto Naskh Arabic on the server for the best PDF text.
+    pip install -r requirements.txt && playwright install chromium
+    export ASM_PASSWORD="..." SECRET_KEY="..." AGENCY_PHONE="+251..."
+    python app.py            # production: gunicorn -w 2 -b 127.0.0.1:8000 app:app
+Install the fonts Poppins and Noto Naskh Arabic on the server for the best PDF text.
+Back up data/ (and data/backups) to another device regularly.

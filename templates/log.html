@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASM · Activity</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">{% include 'pwa.html' %}
-<header class="top"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Back</a></nav></header>
-<main><section class="card"><h2><span>Activity log</span><span class="ar" dir="rtl">سجل النشاط</span></h2>
+<body class="has-nav"><header class="top"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Back</a></nav></header>{% with active='more' %}{% include 'nav.html' %}{% endwith %}
+<main class="narrow"><section class="card"><h2><span>Activity log</span><span class="ar" dir="rtl">سجل النشاط</span></h2>
 {% for r in rows %}<div class="lg"><small>{{ r.ts.replace('T',' ') }}</small><b>{{ r.action }}</b><span>{{ r.who or '' }}{% if r.who and r.detail %} · {% endif %}{{ r.detail }}</span></div>{% else %}<p class="empty">Nothing yet.</p>{% endfor %}</section></main></html>

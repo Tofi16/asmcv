@@ -1,24 +1,32 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ 'Edit' if aid else 'New' }} applicant</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">{% include 'pwa.html' %}
-<header class="top"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Back</a></nav></header>
-<main><form method="post" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<section class="card"><h2>Photos <span class="ar" dir="rtl">الصور</span></h2><div class="photos">
-{% for k,en,am in KINDS %}<label class="up"><span class="box" id="b-{{ k }}">{% if ph.get(k) %}<img src="{{ ph[k] }}" alt="">{% else %}<em>+</em>{% endif %}</span><b>{{ en }}</b><small>{{ am }}</small>
-<input type="file" name="{{ k }}" accept="image/*" data-k="{{ k }}" hidden></label>{% endfor %}</div></section>
-<section class="card"><h2>Document scans <span class="ar" dir="rtl">ሰነዶች (private)</span></h2><div class="photos">
-{% for k,en,am in DOCS %}<label class="up"><span class="box" id="b-{{ k }}">{% if ph.get(k) %}<img src="{{ ph[k] }}" alt="">{% else %}<em>+</em>{% endif %}</span><b>{{ en }}</b><small>{{ am }}</small>
-<input type="file" name="{{ k }}" accept="image/*" data-k="{{ k }}" hidden></label>{% endfor %}</div></section>
+<body class="has-nav"><header class="top"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Back</a></nav></header>{% with active=('apps' if aid else 'new') %}{% include 'nav.html' %}{% endwith %}
+{% macro upload(k,en,am,pdf=False) %}<label class="up"><span class="box" id="b-{{ k }}">{% if ph.get(k) %}{% if '#pdf' in ph[k] %}<em class="pdfm">PDF</em>{% else %}<img src="{{ ph[k] }}" alt="">{% endif %}{% else %}<em>+</em>{% endif %}</span><b>{{ en }}</b><small>{{ am }}</small>
+<input type="file" name="{{ k }}" accept="{{ 'image/*,application/pdf' if pdf else 'image/*' }}" data-k="{{ k }}" hidden></label>{% endmacro %}
+{% macro sec(title, fields) %}<section class="card"><h2>{{ title }}</h2><div class="fields">
+{% for f in fields %}<label class="{{ 'wide' if f[0] in ('address','contact_address','education') }}">{{ f[1] }} <span class="ar" dir="rtl">{{ f[2] }}</span>
+{% if f|length > 3 and f[3]=='select' %}<select name="{{ f[0] }}"><option value="">—</option>{% for o in f[4] %}<option {{ 'selected' if d.get(f[0])==o }}>{{ o }}</option>{% endfor %}</select>
+{% else %}<input name="{{ f[0] }}" type="{{ f[3] if f|length > 3 else 'text' }}" value="{{ d.get(f[0],'') }}" {{ 'required' if f[0]=='name' }}>{% endif %}</label>{% endfor %}
+</div></section>{% endmacro %}
+<main><form method="post" enctype="multipart/form-data" id="af">
+<div class="ctabs"><button type="button" data-t="cv" class="on">CV details</button><button type="button" data-t="documents">Documents</button></div>
+<div class="fgrid"><div class="tp on" data-t="cv"><p class="hint">Everything here appears on the CV. Documents, IDs and certificates are in the other tab and never go on the CV.</p>
+<section class="card"><h2>Photos <span class="ar" dir="rtl">الصور</span></h2><div class="photos">{% for k,en,am in KINDS %}{{ upload(k,en,am) }}{% endfor %}</div></section>
 <section class="card"><h2>Experience abroad <span class="ar" dir="rtl">الخبرة خارج البلاد</span></h2>
 <datalist id="cs"><option>Saudi Arabia</option><option>Kuwait</option><option>Beirut (Lebanon)</option><option>Dubai (UAE)</option><option>Abu Dhabi (UAE)</option><option>Qatar</option><option>Oman</option><option>Bahrain</option><option>Jordan</option></datalist>
 <div id="xp">{% for e in d.exp %}<div class="xrow"><input name="exp_country" list="cs" placeholder="Country (e.g. Beirut)" value="{{ e.country }}"><input name="exp_period" placeholder="e.g. 3 years" value="{{ e.period }}"><button type="button" class="x" aria-label="Remove">&times;</button></div>{% endfor %}</div>
 <button type="button" class="btn ghost" id="addx">+ Add more country</button></section>
-{% for title, fields in SECTIONS %}<section class="card"><h2>{{ title }}</h2><div class="fields">
-{% for f in fields %}<label class="{{ 'wide' if f[0] in ('address','contact_address','education') }}">{{ f[1] }} <span class="ar" dir="rtl">{{ f[2] }}</span>
-{% if f|length > 3 and f[3]=='select' %}<select name="{{ f[0] }}"><option value="">—</option>{% for o in f[4] %}<option {{ 'selected' if d.get(f[0])==o }}>{{ o }}</option>{% endfor %}</select>
-{% else %}<input name="{{ f[0] }}" type="{{ f[3] if f|length > 3 else 'text' }}" value="{{ d.get(f[0],'') }}" {{ 'required' if f[0]=='name' }}>{% endif %}</label>{% endfor %}
-</div></section>{% endfor %}
+{% for title, fields in SECTIONS if 'private' not in title %}{{ sec(title, fields) }}{% endfor %}</div>
+<div class="tp" data-t="documents" id="documents"><p class="hint">Private. Kept together with this applicant. PDF or photo; the original file is kept for download.</p>
+<section class="card"><h2>Document files <span class="ar" dir="rtl">ሰነዶች</span></h2><div class="photos">{% for k,en,am in DOCS %}{{ upload(k,en,am,True) }}{% endfor %}</div></section>
+{% for title, fields in SECTIONS if 'private' in title %}{{ sec(title, fields) }}{% endfor %}</div></div>
 <button class="btn big">Save and view CV</button></form></main>
-<script>document.querySelectorAll('input[type=file]').forEach(i=>i.addEventListener('change',()=>{const f=i.files[0];if(!f)return;const b=document.getElementById('b-'+i.dataset.k);b.innerHTML='';const im=new Image();im.src=URL.createObjectURL(f);b.appendChild(im)}))</script><script>const xp=document.getElementById('xp'),add=document.getElementById('addx');
+<script>const tabs=document.querySelectorAll('.ctabs button'),panels=document.querySelectorAll('.tp');
+function openTab(t){tabs.forEach(b=>b.classList.toggle('on',b.dataset.t===t));panels.forEach(p=>p.classList.toggle('on',p.dataset.t===t))}
+tabs.forEach(b=>b.onclick=()=>openTab(b.dataset.t));if(location.hash==='#documents')openTab('documents');
+document.getElementById('af').addEventListener('invalid',()=>openTab('cv'),true);
+document.querySelectorAll('input[type=file]').forEach(i=>i.addEventListener('change',()=>{const f=i.files[0];if(!f)return;const b=document.getElementById('b-'+i.dataset.k);b.innerHTML='';
+if(f.type==='application/pdf'){b.innerHTML='<em class="pdfm">PDF</em>';return}const im=new Image();im.src=URL.createObjectURL(f);b.appendChild(im)}))</script><script>const xp=document.getElementById('xp'),add=document.getElementById('addx');
 function row(){const r=document.createElement('div');r.className='xrow';r.innerHTML='<input name="exp_country" list="cs" placeholder="Country (e.g. Beirut)"><input name="exp_period" placeholder="e.g. 3 years"><button type="button" class="x" aria-label="Remove">&times;</button>';xp.appendChild(r);return r}
 add.onclick=()=>{if(xp.children.length<6)row().querySelector('input').focus();add.disabled=xp.children.length>=6};
 xp.onclick=e=>{if(e.target.classList.contains('x')){e.target.parentNode.remove();add.disabled=false}};if(!xp.children.length)row();</script></html>
