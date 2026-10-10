@@ -11,6 +11,8 @@ body{background:#cfd8de;font-family:'Poppins',sans-serif;color:var(--ink);font-s
 .bar{position:sticky;top:0;z-index:9;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px;background:var(--navy)}
 .bar a{color:#fff;text-decoration:none;font-size:14px;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.14)}
 .bar a.pri{background:var(--red);font-weight:600}
+.bar button{border:0;color:#fff;font:600 14px 'Poppins',sans-serif;padding:8px 14px;border-radius:8px;background:var(--red);cursor:pointer}
+.bar .pdf-status{flex-basis:100%;text-align:center;color:#cfe3ee;font:12px 'Poppins',sans-serif}
 .page{width:210mm;height:297mm;margin:8mm auto;background:#fff;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.2)}
 @media print{body{background:none}.bar{display:none}.page{margin:0;box-shadow:none}}
 @media screen and (max-width:820px){.page{zoom:.42;margin:4mm auto}}
@@ -81,7 +83,9 @@ body{background:#cfd8de;font-family:'Poppins',sans-serif;color:var(--ink);font-s
 {% macro row(k, cls='', en=None, m=False) %}{% if d.get(k) %}<div class="r"><span class="l">{{ en or L[k][0] }}</span><span class="v {{ cls }}">{{ d[k] }}{% if m %}{{ meter(d[k]) }}{% endif %}</span><span class="a ar" dir="rtl">{{ L[k][1] }}</span></div>{% endif %}{% endmacro %}
 {% macro photo(k, cls) %}<div class="frame {{ cls }}">{% if ph.get(k) %}<img src="{{ ph[k] }}" alt="">{% else %}<div class="none">No photo</div>{% endif %}</div>{% endmacro %}
 {% if not embed %}<div class="bar"><a href="{{ url_for('index') }}">Back</a><a href="{{ url_for('case', aid=aid) }}">Case</a><a href="{{ url_for('edit', aid=aid) }}">Edit</a>
-<a href="#" class="pri" data-u="{{ url_for('cv_pdf', aid=aid, mask=1 if mask else None) }}" data-n="{{ ((d.name or 'CV')|replace(' ','_') ~ ('_employer' if mask else '') ~ '_CV.pdf') }}">Preparing PDF…</a>
+<a class="pri" download href="{{ url_for('cv_pdf', aid=aid, mask=1 if mask else None, download=1) }}">Download PDF</a>
+<button type="button" data-pdf-share data-u="{{ url_for('cv_pdf', aid=aid, mask=1 if mask else None) }}" data-n="{{ ((d.name or 'CV')|replace(' ','_') ~ ('_employer' if mask else '') ~ '_CV.pdf') }}" hidden>Share PDF</button>
+<span class="pdf-status" data-pdf-status role="status" aria-live="polite">Preparing share option…</span>
 <a href="{{ url_for('cv', aid=aid, mask=None if mask else 1) }}">{{ 'Full copy' if mask else 'Employer copy' }}</a></div><script src="{{ url_for('static', filename='share.js') }}"></script>
 <div class="qc {{ '' if tips else 'ok' }}">{% if tips %}Quality check: {{ tips|join(' · ') }}{% else %}Quality check passed. Ready to send.{% endif %}</div>{% endif %}
 <div class="page {{ 'dense' if dense }}">

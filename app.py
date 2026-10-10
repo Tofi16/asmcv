@@ -643,10 +643,11 @@ def pdf_bytes(aid, mask=False):
     return pdf
 
 
-def pdf_response(data, name):
+def pdf_response(data, name, download=False):
     r = make_response(data)
     r.headers["Content-Type"] = "application/pdf"
-    r.headers["Content-Disposition"] = 'inline; filename="%s"' % name
+    disposition = "attachment" if download else "inline"
+    r.headers["Content-Disposition"] = '%s; filename="%s"' % (disposition, name)
     return r
 
 
@@ -661,7 +662,7 @@ def cv(aid):
 def cv_pdf(aid):
     mask = request.args.get("mask") == "1"
     name = (load(aid).get("name") or "cv").replace(" ", "_") + ("_employer" if mask else "") + "_CV.pdf"
-    return pdf_response(pdf_bytes(aid, mask), name)
+    return pdf_response(pdf_bytes(aid, mask), name, download=request.args.get("download") == "1")
 
 
 def pack_ids():
