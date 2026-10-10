@@ -30,15 +30,17 @@ Install dependencies and the browser used for PDF rendering:
 For local development, run `python app.py`. The development defaults are not suitable for a public deployment.
 
 For production, set `APP_ENV=production`, `SECRET_KEY` to a random value of at least 32 characters,
-and `ASM_PASSWORD` to a unique password of at least 12 characters before starting the WSGI server.
+`ASM_USERNAME` to the first administrator's username, and `ASM_PASSWORD` to a unique password of at least 12 characters before starting the WSGI server.
 For example, generate the session key with `python -c "import secrets; print(secrets.token_hex(32))"`.
 Set `AGENCY_PHONE` if needed. Run behind an HTTPS reverse proxy with:
 
   gunicorn --workers 2 --bind 0.0.0.0:$PORT app:app
 
-On Railway, add `APP_ENV=production`, `SECRET_KEY`, and `ASM_PASSWORD` under the service's Variables
-before deploying. Generate `SECRET_KEY` locally with the command above; use a unique `ASM_PASSWORD` of
-at least 12 characters. Railway supplies `PORT`, which the included `Procfile` binds to. Attach a
+On Railway, add `APP_ENV=production`, `SECRET_KEY`, `ASM_USERNAME` (for example, `tofik`), and
+`ASM_PASSWORD` under the service's Variables before deploying. These username and password values seed
+the administrator only when the database has no users. Changing them does not rename or reset an
+existing account on a persistent volume. Generate `SECRET_KEY` locally with the command above; use a
+unique `ASM_PASSWORD` of at least 12 characters. Railway supplies `PORT`, which the included `Procfile` binds to. Attach a
 persistent volume at `/app/data` so the database and uploaded documents survive redeploys.
 
 The production configuration rejects missing/default secrets, enables secure session cookies, and never
