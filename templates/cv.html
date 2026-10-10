@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ d.name }} · CV</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600&display=swap">
+<style>
+@page{size:A4;margin:0}
+:root{--sky:#29A8E0;--navy:#0B3C5D;--red:#E52329;--yel:#F2D21B;--mist:#EAF6FC;--ink:#17324A;--line:#cde4f1}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#cfd8de;font-family:'Poppins',sans-serif;color:var(--ink);font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.ar{font-family:'Noto Naskh Arabic','Amiri','DejaVu Sans',serif;font-weight:400}
+.bar{position:sticky;top:0;z-index:9;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px;background:var(--navy)}
+.bar a{color:#fff;text-decoration:none;font-size:14px;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.14)}
+.bar a.pri{background:var(--red);font-weight:600}
+.page{width:210mm;height:297mm;margin:8mm auto;background:#fff;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.2)}
+@media print{body{background:none}.bar{display:none}.page{margin:0;box-shadow:none}}
+@media screen and (max-width:820px){.page{zoom:.42;margin:4mm auto}}
+.pad{padding:0 10mm}
+/* top band */
+.band{height:9mm;flex:none;background:var(--sky);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;position:relative;overflow:hidden;font-weight:700;letter-spacing:1.2pt;font-size:8.5pt}
+.band::after{content:"";position:absolute;right:0;top:0;bottom:0;width:62mm;background:var(--red);clip-path:polygon(8mm 0,100% 0,100% 100%,0 100%)}
+.band .ar{position:relative;z-index:2;font-size:11pt;letter-spacing:0}
+.top{flex:none;height:52mm;display:grid;grid-template-columns:36mm 1fr 98mm;gap:6mm;align-items:center;padding:4mm 10mm 0}
+.top .logo{width:100%;max-height:36mm;object-fit:contain}
+/* frames */
+.frame{position:relative;border:1.3mm solid #fff;outline:.8mm solid var(--sky);box-shadow:2.4mm 2.4mm 0 var(--red),0 3mm 7mm rgba(11,60,93,.28);background:radial-gradient(circle at 50% 30%,#fff,#d3ecfa);overflow:hidden}
+.frame img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.frame .none{display:grid;place-items:center;height:100%;color:#7fa3ba;font-size:8pt}
+.face{width:36mm;height:47mm}.face img{object-fit:cover;object-position:50% 18%}
+.bodyp{border-radius:4mm}.bodyp img{object-fit:contain}
+.pass{outline-color:var(--yel);box-shadow:2.4mm 2.4mm 0 var(--navy),0 3mm 7mm rgba(11,60,93,.28);background:#fff}.pass img{object-fit:contain}
+/* tables */
+.tb{border:.3mm solid var(--line);border-radius:2mm;overflow:hidden;background:#fff}
+.sec{background:var(--sky);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:0 2.5mm;height:6.3mm;font-size:7.4pt;font-weight:600;letter-spacing:.3pt}
+.sec.red{background:var(--red)}.sec.navy{background:var(--navy)}
+.sec .ar{font-size:8.5pt;letter-spacing:0}
+.r{display:grid;grid-template-columns:30mm 1fr 28mm;align-items:center;min-height:5.9mm;font-size:7.6pt}
+.r:nth-child(even){background:#f3f9fd}
+.r .l{padding:0 2.2mm;color:#4b6b82;font-size:6.8pt}.r .v{padding:0 2mm;font-weight:600;overflow-wrap:anywhere}.r .a{padding:0 2.2mm;text-align:right;color:#4b6b82;font-size:7.6pt}
+.r .v.y{background:#FFF3A8;align-self:stretch;display:flex;align-items:center}
+.r2{grid-template-columns:1fr 1fr}
+.app .r{grid-template-columns:27mm 1fr 24mm;min-height:7.6mm}
+/* name bar */
+.name{flex:none;margin:3mm 10mm 0;height:15mm;background:linear-gradient(135deg,#0d4468,#082c46);border-left:1.6mm solid var(--yel);border-radius:2.4mm;display:flex;align-items:center;justify-content:space-between;padding:0 4mm;color:#fff}
+.name small{display:flex;gap:4mm;font-size:6pt;color:#9fd4ee;letter-spacing:.4pt}
+.name b{display:block;font-size:14.5pt;font-weight:700;line-height:1.15;overflow-wrap:anywhere}
+.st3{display:flex;gap:2mm;flex:none}
+.pl{border-radius:2mm;padding:1mm 3mm;text-align:center;line-height:1.15;min-width:19mm;background:var(--sky)}
+.pl:nth-child(2){background:var(--red)}.pl:nth-child(3){background:var(--yel);color:#111}
+.pl small{display:block;font-size:5.6pt;color:inherit;opacity:.9;letter-spacing:0}.pl i{font-style:normal;font-size:10pt;font-weight:700}
+/* main */
+.main{flex:none;display:grid;grid-template-columns:1fr 58mm;gap:6mm;padding:4mm 11mm 0 10mm}
+.cl{display:flex;flex-direction:column;gap:3mm;min-height:0}
+.skills{margin:4mm 10mm 0;flex:none}
+.sks{display:grid;gap:2mm;padding:2mm;background:var(--mist)}
+.sk{background:#fff;border-radius:1.6mm;border-left:1mm solid var(--sky);padding:1.2mm 2mm;line-height:1.2;display:flex;flex-direction:column;gap:.5mm}
+.sk b{font-size:7pt;font-weight:600}.sk .ar{font-size:7.4pt;color:#4b6b82}
+.lv{align-self:flex-start;font-style:normal;font-size:6pt;font-weight:600;padding:.2mm 2mm;border-radius:5mm;background:var(--sky);color:#fff}
+.lv.fair{background:#fff;color:var(--sky);box-shadow:inset 0 0 0 .3mm var(--sky)}
+.bottom{flex:1;min-height:0;display:grid;grid-template-columns:104mm 1fr;gap:7mm;padding:5mm 11mm 4mm 10mm}
+.bottom .col{display:flex;flex-direction:column;gap:3mm}.bottom .r{grid-template-columns:23mm 1fr 25mm}
+.ft{flex:none;height:8mm;border-top:1mm solid var(--red);background:var(--navy);color:#fff;font-size:6.8pt;display:flex;align-items:center;justify-content:space-between;padding:0 10mm}
+.band{background-image:repeating-linear-gradient(115deg,rgba(255,255,255,.08) 0 1.2mm,transparent 1.2mm 2.4mm)}
+.sec span:first-child::before{content:"";display:inline-block;width:1.5mm;height:1.5mm;background:var(--yel);transform:rotate(45deg);margin-right:1.8mm;vertical-align:.1mm}
+.sec .tot{font-size:6.8pt;background:rgba(255,255,255,.2);padding:.3mm 2mm;border-radius:4mm}
+.bdg{flex:none;display:flex;gap:1.8mm;padding:2.6mm 10mm 0;flex-wrap:nowrap;white-space:nowrap}
+.bdg span{display:inline-flex;align-items:center;gap:1.4mm;background:#f1faf4;border:.3mm solid #b8e0c4;color:#17683a;border-radius:5mm;padding:.7mm 2.2mm;font-size:6.2pt;font-weight:600}
+.bdg i{font-style:normal;display:grid;place-items:center;width:3.2mm;height:3.2mm;border-radius:50%;background:#1fa463;color:#fff;font-size:5.4pt}
+.bdg em{font-style:normal;font-size:7pt;color:#3d8a5c}
+.xg{display:grid}.xc{display:flex;justify-content:space-between;gap:2mm;padding:0 2.2mm;min-height:5.9mm;align-items:center;font-size:7.6pt;border-top:.2mm solid var(--line)}
+.xg.two .xc:nth-child(odd){border-right:.2mm solid var(--line)}.xc b{font-weight:600}.xc span{color:#4b6b82;white-space:nowrap}
+.dm{display:inline-flex;gap:.7mm;margin-left:1.6mm;vertical-align:middle}.dm i{width:2.1mm;height:2.1mm;border-radius:50%;background:#cfe3ee}.dm i.on{background:var(--sky)}
+.lvl{display:flex;align-items:center}.lvl .dm{margin:0 1.4mm 0 0}.lvl small{font-size:6pt;color:#4b6b82;font-weight:600}
+.dense .r,.dense .xc{min-height:5.1mm}.dense .top{height:47mm;grid-template-columns:31mm 1fr 98mm}.dense .face{width:31mm;height:41mm}
+.tight .r,.tight .xc{min-height:4.5mm;font-size:7.1pt}.tight .top{height:42mm;grid-template-columns:28mm 1fr 98mm}.tight .face{width:28mm;height:36mm}.tight .bdg{padding-top:1.6mm}.tight .sk{padding:.8mm 1.6mm}
+.qc{text-align:center;font-size:13px;padding:7px 12px;background:#fff3cd;color:#7a5b00}.qc.ok{background:#dff5e6;color:#17683a}
+@media print{.qc{display:none}}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}@keyframes pp{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:none}}
+@media screen{.frame{animation:pp .7s both}.tb,.name{animation:up .6s .1s both}.top .logo{animation:up .6s both}}
+</style></head><body>
+{% macro meter(v) %}{% set n = {'Good':3,'Fair':2,'Basic':1}.get(v,0) %}<span class="dm">{% for i in range(3) %}<i class="{{ 'on' if i<n }}"></i>{% endfor %}</span>{% endmacro %}
+{% macro row(k, cls='', en=None, m=False) %}{% if d.get(k) %}<div class="r"><span class="l">{{ en or L[k][0] }}</span><span class="v {{ cls }}">{{ d[k] }}{% if m %}{{ meter(d[k]) }}{% endif %}</span><span class="a ar" dir="rtl">{{ L[k][1] }}</span></div>{% endif %}{% endmacro %}
+{% macro photo(k, cls) %}<div class="frame {{ cls }}">{% if ph.get(k) %}<img src="{{ ph[k] }}" alt="">{% else %}<div class="none">No photo</div>{% endif %}</div>{% endmacro %}
+{% if not embed %}<div class="bar"><a href="{{ url_for('index') }}">Back</a><a href="{{ url_for('case', aid=aid) }}">Case</a><a href="{{ url_for('edit', aid=aid) }}">Edit</a>
+<a href="#" class="pri" data-u="{{ url_for('cv_pdf', aid=aid, mask=1 if mask else None) }}" data-n="{{ ((d.name or 'CV')|replace(' ','_') ~ ('_employer' if mask else '') ~ '_CV.pdf') }}">Preparing PDF…</a>
+<a href="{{ url_for('cv', aid=aid, mask=None if mask else 1) }}">{{ 'Full copy' if mask else 'Employer copy' }}</a></div><script src="{{ url_for('static', filename='share.js') }}"></script>
+<div class="qc {{ '' if tips else 'ok' }}">{% if tips %}Quality check: {{ tips|join(' · ') }}{% else %}Quality check passed. Ready to send.{% endif %}</div>{% endif %}
+<div class="page {{ 'dense' if dense }}">
+ <div class="band"><span>JOB APPLICATION</span><span class="ar" dir="rtl">طلب توظيف</span></div>
+ <div class="top">{{ photo('face','face') }}<img class="logo" src="{{ logo }}" alt="ASM">
+  <div class="tb app">{{ row('ref','',  'Application no') }}{{ row('post','y') }}{{ row('salary','y') }}{{ row('contract','y') }}</div></div>
+ <div class="name"><div><small><span>FULL NAME</span><span class="ar" dir="rtl" style="font-size:7pt">الاسم الكامل</span></small><b style="font-size:{{ 14.5 if d.name|length<=26 else (12.5 if d.name|length<=36 else 11) }}pt">{{ d.name }}</b></div>
+  <div class="st3"><div class="pl"><small>Age · العمر</small><i>{{ d.age or '–' }}</i></div><div class="pl"><small>Height · الطول</small><i>{{ d.height or '–' }}</i></div><div class="pl"><small>Weight · الوزن</small><i>{{ d.weight or '–' }}</i></div></div></div>
+ {% if badges %}<div class="bdg">{% for en,ar in badges %}<span><i>&#10003;</i>{{ en }} <em class="ar" dir="rtl">{{ ar }}</em></span>{% endfor %}</div>{% endif %}
+ <div class="main">
+  <div class="cl">
+   <div class="tb"><div class="sec"><span>Details of applicant</span><span class="ar" dir="rtl">بيانات مقدم الطلب</span></div>
+    {% if not mask %}{{ row('phone') }}{% endif %}{{ row('nationality') }}{{ row('religion') }}{{ row('dob') }}{{ row('birthplace') }}{{ row('address') }}{{ row('marital') }}{{ row('children') }}{{ row('education') }}</div>
+   <div class="tb"><div class="sec"><span>Languages</span><span class="ar" dir="rtl">اللغات</span></div>{{ row('english','',None,True) }}{{ row('arabic','',None,True) }}</div>
+   {% if exp %}<div class="tb"><div class="sec red"><span>Experience abroad</span>{% if exp_total %}<span class="tot">Total {{ exp_total }}</span>{% endif %}<span class="ar" dir="rtl">الخبرة خارج البلاد</span></div>
+    <div class="xg {{ 'two' if exp|length>1 }}" style="grid-template-columns:repeat({{ 2 if exp|length>1 else 1 }},1fr)">{% for e in exp %}<div class="xc"><b>{{ e.country }}</b><span>{{ e.period }}</span></div>{% endfor %}</div></div>{% endif %}
+  </div>
+  {{ photo('body','bodyp') }}
+ </div>
+ {% if skills %}<div class="tb skills"><div class="sec navy"><span>Skills</span><span class="ar" dir="rtl">المهارات</span></div>
+  <div class="sks" style="grid-template-columns:repeat({{ skills|length }},1fr)">{% for k,v in skills %}<div class="sk"><b>{{ L[k][0] }}</b><span class="ar" dir="rtl">{{ L[k][1] }}</span><span class="lvl">{{ meter(v) }}<small>{{ v }}</small></span></div>{% endfor %}</div></div>{% endif %}
+ <div class="bottom">
+  {% if mask %}<div class="frame pass"><div class="none" style="text-align:center;padding:0 8mm">Passport copy available on request<br><span class="ar" dir="rtl">نسخة الجواز عند الطلب</span></div></div>{% else %}{{ photo('passport','pass') }}{% endif %}
+  <div class="col"><div class="tb"><div class="sec"><span>Passport details</span><span class="ar" dir="rtl">بيانات جواز السفر</span></div>
+    {% if not mask %}{{ row('passport_no') }}{% endif %}{{ row('issue_place') }}{{ row('issue_date') }}{{ row('expiry_date') }}</div>
+   {% if d.contact_name and not mask %}<div class="tb"><div class="sec red"><span>Contact person in emergency</span><span class="ar" dir="rtl">شخص للاتصال</span></div>
+    {{ row('contact_name','','Full name') }}{{ row('contact_address','','Address') }}{{ row('contact_phone','','Telephone') }}</div>{% endif %}</div>
+ </div>
+ <div class="ft"><span>ASM · Foreign Employment Agent</span><span>Issued {{ issued }}</span><span>{{ agency_phone }}</span></div>
+</div></body></html>

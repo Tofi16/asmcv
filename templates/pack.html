@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CV pack</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">{% include 'pwa.html' %}
+<header class="top"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Back</a></nav></header>
+<main><section class="card" style="--i:1"><h2><span>CV pack · {{ ids|length }} CVs</span><span class="ar" dir="rtl">ملف السير الذاتية</span></h2>
+{% for n in names %}<div class="lg" style="grid-template-columns:30px 1fr"><small>{{ loop.index }}</small><b>{{ n }}</b></div>{% endfor %}
+<p style="color:var(--mut);font-size:14px;margin:12px 0">One PDF file with all the CVs, one page each. It is sent as a file, never a link.</p>
+<div class="acts"><a href="#" class="btn red" data-u="{{ url_for('pack_pdf', ids=q, mask=1 if mask else None) }}" data-n="ASM_CV_pack.pdf">Preparing PDF…</a>
+<a class="btn ghost" href="{{ url_for('pack', ids=q, mask=None if mask else 1) }}">{{ 'Full copies' if mask else 'Employer copies' }}</a></div>
+{% if mask %}<p class="pill ok" style="margin-top:10px">Employer copies: phone, passport number and passport page are hidden.</p>{% endif %}</section></main>
+<script src="{{ url_for('static', filename='share.js') }}"></script></html>

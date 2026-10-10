@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ d.name }} · Case</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">{% include 'pwa.html' %}
+<header class="top"><svg class="plane" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"><nav><a href="{{ url_for('index') }}">Back</a></nav></header>
+<main>
+{% set cur = t.stage %}
+<section class="card hero" style="--i:1">{% if ph.face %}<img class="th" src="{{ ph.face }}" alt="">{% else %}<span class="th"></span>{% endif %}
+<div style="flex:1;min-width:150px"><h1>{{ d.name }}</h1><p style="margin:2px 0 8px;color:var(--mut)">{{ d.ref }}{% if d.ref and d.post %} · {% endif %}{{ d.post }}</p>
+<div class="acts">{% if d.phone %}<a class="btn ghost" href="tel:{{ d.phone }}">Call</a>{% endif %}{% if wa %}<a class="btn ghost" href="https://wa.me/{{ wa }}?text={{ msg|urlencode }}">WhatsApp status</a>{% endif %}<a class="btn" href="{{ url_for('cv', aid=aid) }}">CV</a><a class="btn ghost" href="{{ url_for('edit', aid=aid) }}">Edit</a></div></div></section>
+{% if request.args.err %}<div class="banner" style="--i:2;background:#fde2e2;color:#8a1c1c">Cannot move to Embassy yet. Missing: {{ request.args.err }}.</div>{% endif %}
+{% if soon %}<div class="banner" style="--i:2">Passport expires within 6 months. Most destinations require longer validity.</div>{% endif %}
+{% if cur >= 2 and pct < 100 %}<div class="banner" style="--i:2">Documents are {{ pct }}% complete, but this case is already at {{ STAGES[cur][0] }}. Check the list below.</div>{% endif %}
+<section class="card" style="--i:3;border-left-color:var(--red)"><h2><span>Progress</span><span class="ar" dir="rtl">مسار الطلب</span></h2>
+<form method="post" action="{{ url_for('set_stage', aid=aid) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="steps"><div class="fill" style="--k:{{ cur/(STAGES|length-1) }}"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></div>
+{% for n,a in STAGES %}<button class="st {{ 'done' if loop.index0<cur }} {{ 'cur' if loop.index0==cur }}" name="stage" value="{{ loop.index0 }}" style="--i:{{ loop.index0 }}"><span class="dot">{{ '✓' if loop.index0<cur else loop.index }}</span>{{ n }}<small>{{ t.dates.get(loop.index0|string, '') }}</small></button>{% endfor %}</div>
+<div class="mv"><label>Date<input type="date" name="date" value="{{ today }}"></label>
+<label>Next step<select name="stage">{% for n,a in STAGES %}<option value="{{ loop.index0 }}" {{ 'selected' if loop.index0==[cur+1,STAGES|length-1]|min }}>{{ n }} · {{ a }}</option>{% endfor %}</select></label>
+<textarea name="note" placeholder="Note: hospital, embassy appointment, flight number, ticket date…">{{ t.note }}</textarea>
+<button class="btn red">Update progress</button></div></form></section>
+<section class="card" style="--i:4"><h2><span>Documents ready</span><span class="ar" dir="rtl">الوثائق</span></h2>
+<div class="rd"><div class="ring" style="--t:{{ pct }}"><span>{{ pct }}%</span></div>
+<div class="ck">{% for (en,am),ok in items %}<div class="{{ 'ok' if ok }}" style="--i:{{ loop.index }}"><i>{{ '✓' if ok else '' }}</i>{{ en }} <span class="ar">{{ am }}</span></div>{% endfor %}</div></div></section>
+{% if med %}<section class="card" style="--i:4;border-left-color:{{ '#E52329' if med[1]<=14 else '#1fa463' }}"><h2><span>Medical validity</span><span class="ar" dir="rtl">صلاحية الفحص</span></h2>
+<div class="rd"><div class="ring" style="--t:{{ [100,[0,(med[1]*100/MEDICAL_DAYS)|round]|max]|min }}"><span>{{ [med[1],0]|max }}d</span></div>
+<div><b>Valid until {{ med[0] }}</b><p style="margin:2px 0 0;color:var(--mut);font-size:14px">{% if med[1]<0 %}Expired. Repeat the medical before travel.{% elif med[1]<=14 %}Expires soon. Book the flight quickly or plan a new medical.{% else %}{{ med[1] }} days left.{% endif %}</p></div></div></section>{% endif %}
+{% if d.employer or d.visa_no or d.destination or d.flight_date or d.airline %}<section class="card" style="--i:5;border-left-color:var(--yel)"><h2><span>Visa &amp; ticket</span><span class="ar" dir="rtl">ቪዛ እና ትኬት</span></h2>
+{% if flight_days is not none %}<div class="fly"><b>{{ [flight_days,0]|max }}</b><span>{{ 'days to flight' if flight_days>=0 else 'flight date has passed' }}</span></div>{% endif %}
+<div class="fields">{% for k in ['employer','destination','visa_no','flight_date','airline'] %}{% if d.get(k) %}<label>{{ L[k][0] }}<b style="display:block;color:var(--ink);font-size:15px">{{ d[k] }}</b></label>{% endif %}{% endfor %}</div></section>{% endif %}
+<section class="card" style="--i:5;border-left-color:#25D366"><h2><span>Send CV on WhatsApp</span><span class="ar" dir="rtl">إرسال</span></h2>
+<p style="margin:0 0 10px;color:var(--mut);font-size:14px">The CV travels as a PDF file, never as a link. Open it, tap Send PDF, then choose WhatsApp.</p>
+<div class="acts"><a class="btn" href="{{ url_for('cv', aid=aid) }}">Full CV</a><a class="btn ghost" href="{{ url_for('cv', aid=aid, mask=1) }}">Employer copy</a></div></section>
+<section class="card" id="offers" style="--i:6;border-left-color:var(--sky)"><h2><span>Sent to employers</span><span class="ar" dir="rtl">أرسلت إلى</span></h2>
+<datalist id="emps">{% for e in employers %}<option>{{ e }}</option>{% endfor %}</datalist>
+<form method="post" action="{{ url_for('add_offer', aid=aid) }}" class="mv"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Employer<input name="employer" list="emps" required></label><label>Status<select name="status"><option>Sent</option><option>Interview</option><option>Accepted</option><option>Rejected</option></select></label><button class="btn">Record</button></form>
+{% for o in offers|reverse %}<div class="nt"><div><b>{{ o.employer }}</b><small>{{ o.date }}</small></div><form method="post" action="{{ url_for('set_offer', aid=aid, oid=o.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><select name="status" class="st-{{ o.status }}" onchange="this.form.submit()">{% for st in ['Sent','Interview','Accepted','Rejected'] %}<option {{ 'selected' if o.status==st }}>{{ st }}</option>{% endfor %}</select></form></div>{% endfor %}</section>
+<section class="card" id="notes" style="--i:7;border-left-color:var(--navy)"><h2><span>Notes &amp; follow-ups</span><span class="ar" dir="rtl">ملاحظات</span></h2>
+<form method="post" action="{{ url_for('add_note', aid=aid) }}" class="mv"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><textarea name="text" placeholder="Write a note or a follow-up…" required></textarea><label>Follow-up date (optional)<input type="date" name="due"></label><button class="btn">Add note</button></form>
+{% for n in notes|reverse %}<div class="nt {{ 'done' if n.done }}"><div><b>{{ n.text }}</b><small>{{ n.ts }} · {{ n.who }}{% if n.due %} · due {{ n.due }}{% endif %}</small></div>{% if n.due and not n.done %}<form method="post" action="{{ url_for('done_note', aid=aid, nid=n.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn ghost">Done</button></form>{% endif %}</div>{% endfor %}</section>
+<section class="card" style="--i:8;border-left-color:var(--yel)"><h2><span>Travel file for embassy</span><span class="ar" dir="rtl">ملف السفر</span></h2>
+<p style="margin:0 0 10px;color:var(--mut);font-size:14px">One PDF: summary page, then every scan on its own page (passport, IDs, COC, consent).</p><a class="btn" href="{{ url_for('travel_file', aid=aid) }}">Open travel file (PDF)</a></section>
+<section class="card" style="--i:9"><h2><span>Scans</span></h2><div class="docs">
+{% for k,en,am in KINDS[2:]+DOCS %}{% if ph.get(k) %}<a class="doc" href="{{ ph[k] }}" target="_blank"><span class="box"><img src="{{ ph[k] }}" alt=""></span>{{ en }}</a>{% endif %}{% endfor %}
+</div>{% if not (ph.passport or ph.idcard or ph.guarantor_id or ph.coc1 or ph.coc2) %}<p class="empty" style="padding:10px">No scans yet. Add them with Edit.</p>{% endif %}</section>
+<section class="card" style="--i:6"><h2><span>Guarantor and IDs</span><span class="ar" dir="rtl">ተያዥ</span></h2>
+<div class="fields">{% for k in ['id_no','labor_id','guarantor_name','guarantor_phone','guarantor_id_no','coc1_no','coc2_no'] %}{% if d.get(k) %}<label>{{ L[k][0] }}<b style="display:block;color:var(--ink);font-size:15px">{{ d[k] }}</b></label>{% endif %}{% endfor %}</div></section>
+</main></html>

@@ -1,0 +1,6 @@
+flask>=3.0
+flask-wtf>=1.2
+pillow>=10.0
+playwright>=1.44
+gunicorn>=22.0
+pypdf>=4.0

@@ -1,0 +1,83 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ASM · Sign in</title>
+{% include 'pwa.html' %}
+<style>
+@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+:root{--sky:#29A8E0;--navy:#06223a;--red:#E52329;--yel:#F2D21B}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:'Poppins',system-ui,sans-serif;color:#fff;background:radial-gradient(120% 90% at 50% 0%,#0d4a73 0%,#06223a 55%,#041626 100%);overflow:hidden;display:grid;place-items:center}
+.bg{position:fixed;inset:0;overflow:hidden;z-index:0}
+.b{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;animation:float 14s ease-in-out infinite alternate}
+.b1{width:300px;height:300px;background:var(--sky);left:-90px;top:-60px}.b2{width:260px;height:260px;background:var(--red);right:-100px;bottom:8%;animation-delay:-5s;opacity:.38}.b3{width:200px;height:200px;background:var(--yel);left:30%;bottom:-90px;animation-delay:-9s;opacity:.28}
+.dots{position:absolute;inset:-50%;background-image:radial-gradient(#ffffff26 1.2px,transparent 1.4px);background-size:26px 26px;animation:pan 40s linear infinite;mask-image:radial-gradient(circle at 50% 50%,#000 10%,transparent 55%)}
+.route{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.route .trail{stroke:#ffffff55;stroke-width:1.6;fill:none;stroke-dasharray:3 7;animation:dash 3s linear infinite}
+.stage{position:relative;z-index:2;width:min(92vw,380px);display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px 0}
+.badge{width:152px;padding:10px 12px;border-radius:22px;background:#fff;box-shadow:0 14px 40px #0008,0 0 0 6px #ffffff1f;animation:drop .9s cubic-bezier(.2,1.4,.4,1) both,bob 5s 1s ease-in-out infinite}
+.badge img{width:100%;display:block}
+h1{font-size:25px;font-weight:700;letter-spacing:.3px;display:flex}
+h1 span{opacity:0;transform:translateY(14px);display:inline-block;animation:letter .5s forwards}
+.sub{font-size:13px;color:#a9d6ee;animation:fade 1s .9s both;text-align:center}
+.card{position:relative;width:100%;border-radius:24px;padding:22px 20px 20px;background:#ffffff14;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 20px 60px #0007;animation:rise .8s .5s both;transition:transform .6s,opacity .6s}
+.card::before{content:"";position:absolute;inset:0;border-radius:24px;padding:1.6px;background:conic-gradient(from var(--a),var(--sky),transparent 30%,var(--red) 55%,transparent 70%,var(--yel),var(--sky));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 5s linear infinite;pointer-events:none}
+.card.shake{animation:rise .8s .5s both,shake .5s 1s}
+.f{position:relative;margin-bottom:14px}
+.f input{width:100%;height:56px;border-radius:14px;border:1.5px solid #ffffff30;background:#0a2a45aa;color:#fff;font:600 17px 'Poppins',sans-serif;padding:22px 48px 4px 16px;letter-spacing:1px;transition:border-color .25s,box-shadow .25s}
+.f input:focus{outline:0;border-color:var(--sky);box-shadow:0 0 0 4px #29a8e044}
+.f label{position:absolute;left:16px;top:17px;font-size:15px;color:#9cc4dc;pointer-events:none;transition:.2s}
+.f input:focus+label,.f input:not(:placeholder-shown)+label{top:7px;font-size:11px;color:var(--sky)}
+.eye{position:absolute;right:6px;top:8px;width:40px;height:40px;border:0;background:none;color:#9cc4dc;cursor:pointer;border-radius:50%}
+.eye svg{width:22px;fill:none;stroke:currentColor;stroke-width:1.8}
+.go{position:relative;overflow:hidden;width:100%;height:54px;border:0;border-radius:14px;color:#fff;font:700 17px 'Poppins',sans-serif;cursor:pointer;background:linear-gradient(135deg,var(--red),#b9121a);box-shadow:0 10px 26px #e5232366;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .15s}
+.go:active{transform:scale(.97)}
+.go::after{content:"";position:absolute;top:0;bottom:0;width:60px;left:-80px;background:linear-gradient(100deg,transparent,#ffffff66,transparent);transform:skewX(-20deg);animation:shine 3.2s 1.6s infinite}
+.go svg{width:20px;fill:#fff;transform:rotate(90deg);transition:transform .3s}.go:hover svg{transform:rotate(90deg) translateY(-4px)}
+.err{color:#ffb4b6;font-size:13px;margin:-4px 0 10px;text-align:center}
+.steps{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0 6px;animation:fade 1s 1.2s both}
+.steps i{width:10px;height:10px;border-radius:50%;background:#ffffff33;animation:lit 6s infinite}
+.steps i:nth-child(1){animation-delay:0s}.steps i:nth-child(3){animation-delay:1s}.steps i:nth-child(5){animation-delay:2s}.steps i:nth-child(7){animation-delay:3s}.steps i:nth-child(9){animation-delay:4s}.steps i:nth-child(11){animation-delay:5s}
+.steps u{flex:1;height:2px;background:#ffffff1f;margin:0 3px}
+.names{display:flex;justify-content:space-between;width:100%;font-size:10px;color:#8bb7d1;padding:0 0;animation:fade 1s 1.4s both}
+.foot{font-size:11px;color:#7fa9c4;animation:fade 1s 1.6s both;text-align:center}
+.go-out .card{transform:translateY(40px) scale(.9);opacity:0}.go-out .badge{transform:scale(.7) translateY(-30px);opacity:0;transition:.6s}
+.jet{position:fixed;left:50%;top:60%;width:56px;fill:#fff;transform:rotate(-45deg) scale(0);opacity:0;z-index:5}
+.go-out .jet{animation:takeoff .9s cubic-bezier(.5,0,.9,.4) forwards}
+@keyframes float{to{transform:translate(40px,50px) scale(1.15)}}@keyframes pan{to{transform:translate(26px,26px)}}
+@keyframes dash{to{stroke-dashoffset:-20}}@keyframes spin{to{--a:360deg}}
+@keyframes drop{from{opacity:0;transform:translateY(-60px) scale(.6)}to{opacity:1;transform:none}}
+@keyframes bob{50%{transform:translateY(-6px)}}@keyframes letter{to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}@keyframes rise{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+@keyframes shine{to{left:130%}}@keyframes shake{20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+@keyframes lit{0%,16%{background:var(--sky);box-shadow:0 0 14px var(--sky)}30%,100%{background:#ffffff33;box-shadow:none}}
+@keyframes takeoff{0%{transform:translate(-30px,60px) rotate(-45deg) scale(1);opacity:1}100%{transform:translate(160px,-620px) rotate(-45deg) scale(1.6);opacity:0}}
+@media(max-height:700px){.badge{width:110px}h1{font-size:21px}.names,.steps{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}h1 span{opacity:1;transform:none}.stage *{opacity:1}}
+</style></head><body>
+<div class="bg"><i class="b b1"></i><i class="b b2"></i><i class="b b3"></i><div class="dots"></div></div>
+<svg class="route" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+ <path id="p1" class="trail" d="M-20 700 C 90 430, 260 520, 420 90"/>
+ <path id="p2" class="trail" style="animation-duration:4.5s" d="M420 760 C 300 560, 120 600, -20 260"/>
+ <g fill="#fff"><circle cx="30" cy="640" r="3.5"/><circle cx="200" cy="470" r="3.5"/><circle cx="380" cy="130" r="3.5"/></g>
+ <g fill="none" stroke="#29A8E0"><circle cx="30" cy="640" r="4"><animate attributeName="r" values="4;22" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" repeatCount="indefinite"/></circle>
+  <circle cx="380" cy="130" r="4"><animate attributeName="r" values="4;22" dur="2.4s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".9;0" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle></g>
+ <g><g transform="rotate(90)"><path fill="#fff" transform="translate(-12 -12) scale(1.1)" d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></g><animateMotion dur="10s" repeatCount="indefinite" rotate="auto"><mpath href="#p1"/></animateMotion></g>
+ <g opacity=".6"><g transform="rotate(90)"><path fill="#F2D21B" transform="translate(-12 -12) scale(.8)" d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></g><animateMotion dur="14s" begin="-4s" repeatCount="indefinite" rotate="auto"><mpath href="#p2"/></animateMotion></g>
+</svg>
+<svg class="jet" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+<main class="stage"><div class="badge"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="ASM"></div>
+ <h1 id="t">ASM CV Studio</h1><p class="sub">እንኳን ደህና መጡ · Welcome back</p>
+ <form class="card {{ 'shake' if err }}" method="post" id="lf">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="f"><input id="un" name="username" placeholder=" " required autofocus autocapitalize="none" autocomplete="username" value="{{ username }}"><label for="un">Username</label></div>
+  <div class="f"><input id="pw" type="password" name="password" placeholder=" " required autocomplete="current-password"><label for="pw">Password</label>
+   <button type="button" class="eye" id="eye" aria-label="Show password"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+  {% if err %}<p class="err">{{ err }}</p>{% endif %}
+  <button class="go"><span>Sign in</span><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></button></form>
+ <div class="steps"><i></i><u></u><i></i><u></u><i></i><u></u><i></i><u></u><i></i><u></u><i></i></div>
+ <div class="names"><span>CV</span><span>Selected</span><span>Medical</span><span>Embassy</span><span>Ticket</span><span>Flown</span></div>
+ <p class="foot">Private system · ASM Foreign Employment Agent</p></main>
+<script>
+const t=document.getElementById('t');t.innerHTML=[...t.textContent].map((c,i)=>`<span style="animation-delay:${.5+i*.05}s">${c===' '?'&nbsp;':c}</span>`).join('');
+const pw=document.getElementById('pw');document.getElementById('eye').onclick=()=>{pw.type=pw.type==='password'?'text':'password'};
+const f=document.getElementById('lf');f.addEventListener('submit',e=>{if(f.dataset.go)return;e.preventDefault();f.dataset.go=1;document.body.classList.add('go-out');setTimeout(()=>f.submit(),750)});
+</script></body></html>

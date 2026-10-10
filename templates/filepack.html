@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Travel file</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<style>@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}
+:root{--sky:#29A8E0;--navy:#0B3C5D;--red:#E52329;--yel:#F2D21B;--mist:#EAF6FC;--ink:#17324A}
+body{font-family:'Poppins',sans-serif;color:var(--ink);font-size:9pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pg{width:210mm;height:297mm;page-break-after:always;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.band{height:12mm;background:var(--sky);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 12mm;font-weight:700;letter-spacing:1pt;font-size:9pt;position:relative;overflow:hidden}
+.band::after{content:"";position:absolute;right:0;top:0;bottom:0;width:60mm;background:var(--red);clip-path:polygon(8mm 0,100% 0,100% 100%,0 100%)}.band span{position:relative;z-index:2}
+.head{display:flex;gap:8mm;align-items:center;padding:8mm 12mm 4mm}.head img.f{width:30mm;height:40mm;object-fit:cover;border:1.2mm solid #fff;outline:.8mm solid var(--sky);box-shadow:2mm 2mm 0 var(--red)}
+.head h1{font-size:19pt;color:var(--navy);line-height:1.15}.head small{color:#5d7f96}.head .lg{margin-left:auto;width:42mm}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;padding:2mm 12mm}
+.tb{border:.3mm solid #cde4f1;border-radius:2mm;overflow:hidden}.sec{background:var(--navy);color:#fff;padding:1.6mm 3mm;font-weight:600;font-size:8pt}
+.r{display:flex;justify-content:space-between;gap:4mm;padding:1.5mm 3mm;border-top:.2mm solid #e3eef5}.r:nth-child(odd){background:#f3f9fd}.r span{color:#5d7f96}.r b{text-align:right;overflow-wrap:anywhere}
+.ok b{color:#17683a}.no b{color:var(--red)}
+.foot{margin-top:auto;height:9mm;background:var(--navy);border-top:1mm solid var(--red);color:#fff;font-size:7.5pt;display:flex;align-items:center;justify-content:space-between;padding:0 12mm}
+.doc{padding:8mm 12mm 6mm;flex:1;display:flex;flex-direction:column;min-height:0}.doc h2{color:var(--navy);font-size:14pt}.doc p{color:#5d7f96;margin:1mm 0 4mm;font-size:9pt}
+.doc .im{flex:1;min-height:0;border:.3mm solid #cde4f1;border-radius:2mm;background:#fafcfe;position:relative}.doc .im img{position:absolute;inset:3mm;width:calc(100% - 6mm);height:calc(100% - 6mm);object-fit:contain}
+</style></head><body>
+<section class="pg"><div class="band"><span>TRAVEL FILE</span><span>ملف السفر</span></div>
+<div class="head">{% if ph.face %}<img class="f" src="{{ ph.face }}" alt="">{% endif %}<div><small>Applicant file · {{ d.ref }}</small><h1>{{ d.name }}</h1><small>{{ d.post }} · {{ d.nationality }}</small></div><img class="lg" src="{{ logo }}" alt=""></div>
+<div class="grid"><div class="tb"><div class="sec">Details</div>{% for k,v in facts %}<div class="r"><span>{{ k }}</span><b>{{ v }}</b></div>{% endfor %}</div>
+<div><div class="tb"><div class="sec">Documents · {{ pct }}%</div>{% for (en,am),ok in items %}<div class="r {{ 'ok' if ok else 'no' }}"><span>{{ en }}</span><b>{{ 'Ready' if ok else 'Missing' }}</b></div>{% endfor %}</div>
+<div class="tb" style="margin-top:6mm"><div class="sec">Progress</div>{% for n,a in STAGES %}{% if loop.index0<=t.stage %}<div class="r"><span>{{ n }}</span><b>{{ t.dates.get(loop.index0|string, 'CV created' if loop.index0==0 else '') }}</b></div>{% endif %}{% endfor %}</div></div></div>
+<div class="foot"><span>ASM · Foreign Employment Agent</span><span>Prepared {{ issued }}</span></div></section>
+{% for title,k,cap in pages %}<section class="pg"><div class="band"><span>{{ title|upper }}</span><span>{{ d.name }}</span></div><div class="doc"><h2>{{ title }}</h2><p>{{ cap or ' ' }}</p><div class="im"><img src="{{ ph[k] }}" alt=""></div></div><div class="foot"><span>ASM · Foreign Employment Agent</span><span>{{ d.ref }}</span></div></section>{% endfor %}
+</body></html>
